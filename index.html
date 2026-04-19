@@ -80,27 +80,17 @@
         button.secondary { background: rgba(15, 17, 26, 0.35); backdrop-filter: blur(110px); -webkit-backdrop-filter: blur(110px); color: #fff; font-weight: 400; font-size: 14px; border: 1px solid rgba(255,255,255,0.05); }
         button.secondary:hover { background: rgba(40, 196, 255, 0.15); color: #28C4FF; border-color: rgba(40, 196, 255, 0.3); }
         .btn-small { height: 32px; font-size: 12px; }
-
-        /* --- SAFE ZONE OVERLAY --- */
-        #safe-zone {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7); /* Темная маска вокруг */
-            border: 1px dashed rgba(255, 255, 255, 0.4);
-            pointer-events: none; /* Пропускаем клики на канвас */
-            z-index: 5; /* Под UI-панелями, но над канвасом */
-            transition: width 0.3s, height 0.3s;
-            display: none; /* Скрыто по умолчанию (Режим Fullscreen) */
-        }
     </style>
 </head>
 <body>
 
     <canvas id="glcanvas"></canvas>
+<<<<<<< HEAD
     <div id="safe-zone"></div> ```
 
     <canvas id="glcanvas"></canvas>
+=======
+>>>>>>> parent of 397c5a8 (Safe zone)
 
     <div class="ui-panel left-panel">
         <div class="panel-section">
@@ -594,6 +584,7 @@
             const btn = e.currentTarget; const o = btn.innerHTML; 
             btn.innerHTML = '⚙️ Ожидайте...'; await new Promise(r => setTimeout(r, 10));
             const ow = canvas.width, oh = canvas.height, rw = 3840, rh = 2160;
+<<<<<<< HEAD
             
 // Умный расчет 4K разрешения на основе Safe Zone
             let renderW = 3840; 
@@ -612,6 +603,8 @@
                     renderH = 3840; renderW = Math.floor(3840 * screenAspect);
                 }
             }
+=======
+>>>>>>> parent of 397c5a8 (Safe zone)
             
             tc.toBlob((b) => { 
                 if (!b) { btn.innerHTML = 'Ошибка ❌'; setTimeout(() => btn.innerHTML = o, 800); return; } 
@@ -644,6 +637,7 @@
         });
 
         setTimeout(render, 50);
+<<<<<<< HEAD
 
         // --- ЛОГИКА SAFE ZONES ---
         let currentRatio = 'free';
@@ -690,6 +684,8 @@
 
         window.addEventListener('resize', updateSafeZone);
         
+=======
+>>>>>>> parent of 397c5a8 (Safe zone)
     </script>
 </body>
 </html>
