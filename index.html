@@ -100,19 +100,6 @@
     <canvas id="glcanvas"></canvas>
     <div id="safe-zone"></div> ```
 
-Теперь найди Левую панель (`left-panel`). Давай добавим туда переключатель форматов. Вставь этот код прямо под блоком «Стиль генерации»:
-
-```html
-        <div class="panel-section" style="margin-top: 8px;">
-            <h3 class="panel-title">Формат (Safe Zone)</h3>
-            <div class="action-buttons">
-                <button class="safe-btn active" data-ratio="free" style="padding: 0;">Full</button>
-                <button class="safe-btn" data-ratio="16:9" style="padding: 0;">16:9</button>
-                <button class="safe-btn" data-ratio="9:16" style="padding: 0;">9:16</button>
-                <button class="safe-btn" data-ratio="1:1" style="padding: 0;">1:1</button>
-            </div>
-        </div>
-
     <canvas id="glcanvas"></canvas>
 
     <div class="ui-panel left-panel">
@@ -123,6 +110,17 @@
                 <button class="mode-btn" data-mode="1"><span class="icon">🌌</span> Aurora</button>
                 <button class="mode-btn" data-mode="2"><span class="icon">🌫️</span> Grainy Mesh</button>
                 <button class="mode-btn" data-mode="3"><span class="icon">💿</span> Foil / Oil Spill</button>
+            </div>
+        </div>
+
+        ```html
+        <div class="panel-section" style="margin-top: 8px;">
+            <h3 class="panel-title">Формат (Safe Zone)</h3>
+            <div class="action-buttons">
+                <button class="safe-btn active" data-ratio="free" style="padding: 0;">Full</button>
+                <button class="safe-btn" data-ratio="16:9" style="padding: 0;">16:9</button>
+                <button class="safe-btn" data-ratio="9:16" style="padding: 0;">9:16</button>
+                <button class="safe-btn" data-ratio="1:1" style="padding: 0;">1:1</button>
             </div>
         </div>
 
