@@ -97,16 +97,6 @@
             </div>
         </div>
 
-        ```html
-        <div class="panel-section" style="margin-top: 8px;">
-            <h3 class="panel-title">Формат (Safe Zone)</h3>
-            <div class="action-buttons">
-                <button class="safe-btn active" data-ratio="free" style="padding: 0;">Full</button>
-                <button class="safe-btn" data-ratio="16:9" style="padding: 0;">16:9</button>
-                <button class="safe-btn" data-ratio="9:16" style="padding: 0;">9:16</button>
-                <button class="safe-btn" data-ratio="1:1" style="padding: 0;">1:1</button>
-            </div>
-        </div>
 
         <div class="panel-section" style="margin-top: 8px;">
             <h3 class="panel-title">Оптика и Размытие</h3>
@@ -578,6 +568,22 @@
             const btn = e.currentTarget; const o = btn.innerHTML; 
             btn.innerHTML = '⚙️ Ожидайте...'; await new Promise(r => setTimeout(r, 10));
             const ow = canvas.width, oh = canvas.height, rw = 3840, rh = 2160;
+            
+            canvas.width = rw; canvas.height = rh; gl.viewport(0, 0, rw, rh); 
+            gl.uniform2f(locRes, rw, rh); gl.drawArrays(gl.TRIANGLES, 0, 6);
+            
+            const p = new Uint8Array(rw * rh * 4); gl.readPixels(0, 0, rw, rh, gl.RGBA, gl.UNSIGNED_BYTE, p);
+            canvas.width = ow; canvas.height = oh; render(); 
+            
+            const fp = new Uint8Array(rw * rh * 4);
+            for (let r = 0; r < rh; r++) for (let c = 0; c < rw; c++) { 
+                const si = (r * rw + c) * 4, di = ((rh - r - 1) * rw + c) * 4; 
+                fp[di] = p[si]; fp[di+1] = p[si+1]; fp[di+2] = p[si+2]; fp[di+3] = p[si+3]; 
+            }
+            
+            const tc = document.createElement('canvas'); tc.width = rw; tc.height = rh; 
+            const ctx = tc.getContext('2d'); const idata = ctx.createImageData(rw, rh); 
+            idata.data.set(fp); ctx.putImageData(idata, 0, 0);
             
             tc.toBlob((b) => { 
                 if (!b) { btn.innerHTML = 'Ошибка ❌'; setTimeout(() => btn.innerHTML = o, 800); return; } 
