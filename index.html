@@ -80,9 +80,38 @@
         button.secondary { background: rgba(15, 17, 26, 0.35); backdrop-filter: blur(110px); -webkit-backdrop-filter: blur(110px); color: #fff; font-weight: 400; font-size: 14px; border: 1px solid rgba(255,255,255,0.05); }
         button.secondary:hover { background: rgba(40, 196, 255, 0.15); color: #28C4FF; border-color: rgba(40, 196, 255, 0.3); }
         .btn-small { height: 32px; font-size: 12px; }
+
+        /* --- SAFE ZONE OVERLAY --- */
+        #safe-zone {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7); /* Темная маска вокруг */
+            border: 1px dashed rgba(255, 255, 255, 0.4);
+            pointer-events: none; /* Пропускаем клики на канвас */
+            z-index: 5; /* Под UI-панелями, но над канвасом */
+            transition: width 0.3s, height 0.3s;
+            display: none; /* Скрыто по умолчанию (Режим Fullscreen) */
+        }
     </style>
 </head>
 <body>
+
+    <canvas id="glcanvas"></canvas>
+    <div id="safe-zone"></div> ```
+
+Теперь найди Левую панель (`left-panel`). Давай добавим туда переключатель форматов. Вставь этот код прямо под блоком «Стиль генерации»:
+
+```html
+        <div class="panel-section" style="margin-top: 8px;">
+            <h3 class="panel-title">Формат (Safe Zone)</h3>
+            <div class="action-buttons">
+                <button class="safe-btn active" data-ratio="free" style="padding: 0;">Full</button>
+                <button class="safe-btn" data-ratio="16:9" style="padding: 0;">16:9</button>
+                <button class="safe-btn" data-ratio="9:16" style="padding: 0;">9:16</button>
+                <button class="safe-btn" data-ratio="1:1" style="padding: 0;">1:1</button>
+            </div>
+        </div>
 
     <canvas id="glcanvas"></canvas>
 
@@ -567,6 +596,24 @@
             const btn = e.currentTarget; const o = btn.innerHTML; 
             btn.innerHTML = '⚙️ Ожидайте...'; await new Promise(r => setTimeout(r, 10));
             const ow = canvas.width, oh = canvas.height, rw = 3840, rh = 2160;
+
+            // Умный расчет 4K разрешения на основе Safe Zone
+            let renderW = 3840; 
+            let renderH = 2160;
+
+            if (currentRatio === '9:16') {
+                renderW = 2160; renderH = 3840;
+            } else if (currentRatio === '1:1') {
+                renderW = 3840; renderH = 3840;
+            } else if (currentRatio === 'free') {
+                // Если рамка не выбрана, рендерим пропорционально экрану пользователя (максимум 4K)
+                const screenAspect = canvas.width / canvas.height;
+                if (screenAspect > 1) {
+                    renderW = 3840; renderH = Math.floor(3840 / screenAspect);
+                } else {
+                    renderH = 3840; renderW = Math.floor(3840 * screenAspect);
+                }
+            }
             
             canvas.width = rw; canvas.height = rh; gl.viewport(0, 0, rw, rh); 
             gl.uniform2f(locRes, rw, rh); gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -615,6 +662,52 @@
         });
 
         setTimeout(render, 50);
+
+        // --- ЛОГИКА SAFE ZONES ---
+        let currentRatio = 'free';
+        const safeZoneEl = document.getElementById('safe-zone');
+
+        function updateSafeZone() {
+            if (currentRatio === 'free') {
+                safeZoneEl.style.display = 'none';
+                return;
+            }
+            
+            safeZoneEl.style.display = 'block';
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+            
+            // Оставляем небольшие отступы (padding) по краям
+            const maxW = winW - 80; 
+            const maxH = winH - 80;
+
+            let targetW, targetH;
+
+            if (currentRatio === '16:9') {
+                targetW = maxW; targetH = maxW * (9/16);
+                if (targetH > maxH) { targetH = maxH; targetW = maxH * (16/9); }
+            } else if (currentRatio === '9:16') {
+                targetH = maxH; targetW = maxH * (9/16);
+                if (targetW > maxW) { targetW = maxW; targetH = maxW * (16/9); }
+            } else if (currentRatio === '1:1') {
+                targetW = Math.min(maxW, maxH); targetH = targetW;
+            }
+
+            safeZoneEl.style.width = Math.floor(targetW) + 'px';
+            safeZoneEl.style.height = Math.floor(targetH) + 'px';
+        }
+
+        document.querySelectorAll('.safe-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.safe-btn').forEach(b => b.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                currentRatio = e.currentTarget.getAttribute('data-ratio');
+                updateSafeZone();
+            });
+        });
+
+        window.addEventListener('resize', updateSafeZone);
+
     </script>
 </body>
 </html>
