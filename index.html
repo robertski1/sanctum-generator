@@ -85,12 +85,6 @@
 <body>
 
     <canvas id="glcanvas"></canvas>
-<<<<<<< HEAD
-    <div id="safe-zone"></div> ```
-
-    <canvas id="glcanvas"></canvas>
-=======
->>>>>>> parent of 397c5a8 (Safe zone)
 
     <div class="ui-panel left-panel">
         <div class="panel-section">
@@ -584,27 +578,6 @@
             const btn = e.currentTarget; const o = btn.innerHTML; 
             btn.innerHTML = '⚙️ Ожидайте...'; await new Promise(r => setTimeout(r, 10));
             const ow = canvas.width, oh = canvas.height, rw = 3840, rh = 2160;
-<<<<<<< HEAD
-            
-// Умный расчет 4K разрешения на основе Safe Zone
-            let renderW = 3840; 
-            let renderH = 2160;
-
-            if (currentRatio === '9:16') {
-                renderW = 2160; renderH = 3840;
-            } else if (currentRatio === '1:1') {
-                renderW = 3840; renderH = 3840;
-            } else if (currentRatio === 'free') {
-                // Если рамка не выбрана, рендерим пропорционально экрану пользователя (максимум 4K)
-                const screenAspect = canvas.width / canvas.height;
-                if (screenAspect > 1) {
-                    renderW = 3840; renderH = Math.floor(3840 / screenAspect);
-                } else {
-                    renderH = 3840; renderW = Math.floor(3840 * screenAspect);
-                }
-            }
-=======
->>>>>>> parent of 397c5a8 (Safe zone)
             
             tc.toBlob((b) => { 
                 if (!b) { btn.innerHTML = 'Ошибка ❌'; setTimeout(() => btn.innerHTML = o, 800); return; } 
@@ -637,55 +610,6 @@
         });
 
         setTimeout(render, 50);
-<<<<<<< HEAD
-
-        // --- ЛОГИКА SAFE ZONES ---
-        let currentRatio = 'free';
-        const safeZoneEl = document.getElementById('safe-zone');
-
-        function updateSafeZone() {
-            if (currentRatio === 'free') {
-                safeZoneEl.style.display = 'none';
-                return;
-            }
-            
-            safeZoneEl.style.display = 'block';
-            const winW = window.innerWidth;
-            const winH = window.innerHeight;
-            
-            // Оставляем небольшие отступы (padding) по краям
-            const maxW = winW - 80; 
-            const maxH = winH - 80;
-
-            let targetW, targetH;
-
-            if (currentRatio === '16:9') {
-                targetW = maxW; targetH = maxW * (9/16);
-                if (targetH > maxH) { targetH = maxH; targetW = maxH * (16/9); }
-            } else if (currentRatio === '9:16') {
-                targetH = maxH; targetW = maxH * (9/16);
-                if (targetW > maxW) { targetW = maxW; targetH = maxW * (16/9); }
-            } else if (currentRatio === '1:1') {
-                targetW = Math.min(maxW, maxH); targetH = targetW;
-            }
-
-            safeZoneEl.style.width = Math.floor(targetW) + 'px';
-            safeZoneEl.style.height = Math.floor(targetH) + 'px';
-        }
-
-        document.querySelectorAll('.safe-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.safe-btn').forEach(b => b.classList.remove('active'));
-                e.currentTarget.classList.add('active');
-                currentRatio = e.currentTarget.getAttribute('data-ratio');
-                updateSafeZone();
-            });
-        });
-
-        window.addEventListener('resize', updateSafeZone);
-        
-=======
->>>>>>> parent of 397c5a8 (Safe zone)
     </script>
 </body>
 </html>
