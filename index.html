@@ -1092,7 +1092,7 @@
             }
         }, { passive: false });
 
-        // --- ИНИЦИАЛИЗАЦИЯ PICKR (Финальная защита ввода) ---
+        // --- ИНИЦИАЛИЗАЦИЯ PICKR (Финальная версия с переименованием кнопок) ---
         const pickers = {};
         
         function initPickr(elId, defaultColor, textId, storeKey) {
@@ -1100,7 +1100,7 @@
                 el: elId,
                 theme: 'classic',
                 default: defaultColor,
-                swatches: [], // Без сэмплов
+                swatches: [], 
                 components: {
                     preview: true, opacity: false, hue: true,
                     interaction: { hex: true, rgba: true, hsla: true, input: true, save: true }
@@ -1112,7 +1112,17 @@
 
             pickr.on('init', instance => {
                 const root = instance.getRoot().interaction;
+                const appRoot = instance.getRoot().app;
                 
+                // 1. ПЕРЕИМЕНОВЫВАЕМ СТАНДАРТНЫЕ КНОПКИ PICKR
+                const btnHex = appRoot.querySelector('input.pcr-type[value="HEXA"]');
+                if(btnHex) btnHex.value = 'HEX';
+                const btnRgb = appRoot.querySelector('input.pcr-type[value="RGBA"]');
+                if(btnRgb) btnRgb.value = 'RGB';
+                const btnHsl = appRoot.querySelector('input.pcr-type[value="HSLA"]');
+                if(btnHsl) btnHsl.value = 'HSL';
+
+                // Создаем наш контейнер с инпутами
                 const customWrapper = document.createElement('div');
                 customWrapper.className = 'custom-pickr-inputs';
                 customWrapper.innerHTML = `
@@ -1126,7 +1136,7 @@
                 const i2 = customWrapper.querySelector('.i2');
                 const i3 = customWrapper.querySelector('.i3');
 
-                // Глушим события
+                // Глушим события для защиты от закрытия
                 ['keydown', 'keyup', 'keypress', 'mousedown', 'mouseup', 'click', 'pointerdown'].forEach(evt => {
                     customWrapper.addEventListener(evt, e => e.stopPropagation());
                 });
@@ -1135,18 +1145,19 @@
                     const rep = instance.getColorRepresentation();
                     const color = instance.getColor();
                     
-                    if (rep === 'HEXA') {
+                    // ДОБАВЛЕНЫ ПРОВЕРКИ НОВЫХ НАЗВАНИЙ (HEX, RGB, HSL)
+                    if (rep === 'HEXA' || rep === 'HEX') {
                         i1.type = 'text'; i1.maxLength = 7;
                         if (document.activeElement !== i1) i1.value = color.toHEXA().toString().toUpperCase();
                         i1.style.display = 'block'; i2.style.display = 'none'; i3.style.display = 'none';
-                    } else if (rep === 'RGBA') {
+                    } else if (rep === 'RGBA' || rep === 'RGB') {
                         i1.type = 'number'; 
                         const rgba = color.toRGBA();
                         if (document.activeElement !== i1) i1.value = Math.round(rgba[0]); 
                         if (document.activeElement !== i2) i2.value = Math.round(rgba[1]); 
                         if (document.activeElement !== i3) i3.value = Math.round(rgba[2]);
                         i1.style.display = 'block'; i2.style.display = 'block'; i3.style.display = 'block';
-                    } else if (rep === 'HSLA') {
+                    } else if (rep === 'HSLA' || rep === 'HSL') {
                         i1.type = 'number'; 
                         const hsla = color.toHSLA();
                         if (document.activeElement !== i1) i1.value = Math.round(hsla[0]); 
@@ -1156,26 +1167,24 @@
                     }
                 };
 
-                // Функция: Собрать цифры, отрезать лишнее и ТИХО применить к Pickr
                 const applyFromCustom = (e) => {
                     const rep = instance.getColorRepresentation();
                     let applied = false;
 
-                    // 1. ЖЕСТКОЕ ОГРАНИЧЕНИЕ НА 3 СИМВОЛА ПРИ ВВОДЕ (для RGB и HSL)
+                    // Обрезка до 3 символов
                     if (e && e.target && e.target.type === 'number') {
                         if (e.target.value.length > 3) {
                             e.target.value = e.target.value.slice(0, 3);
                         }
                     }
 
-                    if (rep === 'HEXA') {
+                    if (rep === 'HEXA' || rep === 'HEX') {
                         let val = i1.value.trim();
                         if (val && !val.startsWith('#')) val = '#' + val;
                         if (/^#[0-9A-Fa-f]{3}$/i.test(val) || /^#[0-9A-Fa-f]{6}$/i.test(val)) {
                             applied = instance.setColor(val, true); 
                         }
-                    } else if (rep === 'RGBA') {
-                        // 2. ВИЗУАЛЬНОЕ ОГРАНИЧЕНИЕ ЗНАЧЕНИЯ (Не больше 255)
+                    } else if (rep === 'RGBA' || rep === 'RGB') {
                         if (parseInt(i1.value) > 255) i1.value = 255;
                         if (parseInt(i2.value) > 255) i2.value = 255;
                         if (parseInt(i3.value) > 255) i3.value = 255;
@@ -1184,8 +1193,7 @@
                         const g = parseInt(i2.value) || 0;
                         const b = parseInt(i3.value) || 0;
                         applied = instance.setColor(`rgba(${r}, ${g}, ${b}, 1)`, true);
-                    } else if (rep === 'HSLA') {
-                        // 3. ВИЗУАЛЬНОЕ ОГРАНИЧЕНИЕ ДЛЯ HSL (H до 360, S и L до 100)
+                    } else if (rep === 'HSLA' || rep === 'HSL') {
                         if (parseInt(i1.value) > 360) i1.value = 360;
                         if (parseInt(i2.value) > 100) i2.value = 100;
                         if (parseInt(i3.value) > 100) i3.value = 100;
@@ -1196,7 +1204,6 @@
                         applied = instance.setColor(`hsla(${h}, ${s}%, ${l}%, 1)`, true);
                     }
 
-                    // Если цвет применился, вручную обновляем канвас и текстовое поле
                     if (applied) {
                         textInput.value = instance.getColor().toHEXA().toString().toUpperCase();
                         render();
@@ -1210,7 +1217,8 @@
                 instance.on('change', updateCustomInputs);
                 
                 instance.getRoot().app.addEventListener('click', (e) => {
-                    if(e.target.tagName.toLowerCase() === 'button') {
+                    // Строгая проверка, чтобы реагировало только на кнопки форматов
+                    if(e.target.tagName.toLowerCase() === 'button' && e.target.classList.contains('pcr-type')) {
                         setTimeout(updateCustomInputs, 10);
                     }
                 });
