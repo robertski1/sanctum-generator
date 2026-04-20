@@ -3,7 +3,7 @@
 <html lang="ru"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Fluid Glow Gradient + PRO</title>
+    <title>Sanctum</title>
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
@@ -81,28 +81,30 @@
         button.secondary:hover { background: rgba(40, 196, 255, 0.15); color: #28C4FF; border-color: rgba(40, 196, 255, 0.3); }
         .btn-small { height: 32px; font-size: 12px; }
 
-        /* --- SAFE ZONE & STENCIL --- */
+        /* --- Стили Safe Zone и Трафаретов --- */
         #safe-zone {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.85); /* Темная маска вокруг */
-            pointer-events: none; /* Пропускаем клики сквозь рамку на канвас */
-            z-index: 5; /* Под UI-панелями, но над градиентом */
-            transition: width 0.3s, height 0.3s;
-            display: none; /* Скрыто по умолчанию */
-            border-radius: 4px; /* Легкое скругление углов самой зоны */
-            overflow: hidden;
-        }
-        
-        #stencil-overlay {
-            width: 100%; height: 100%;
-            background-size: 100% 100%;
-            background-position: center;
-            background-repeat: no-repeat;
-            opacity: 1;
-            transition: background-image 0.3s;
-        }
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        /* Тень создает эффект паспарту (затемнение фона) */
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75); 
+        border: 1px solid rgba(40, 196, 255, 0.5); /* Видимая граница */
+        pointer-events: none; /* Мышь проходит сквозь рамку к шейдеру */
+        z-index: 5;
+        display: none; 
+        overflow: hidden;
+        background-color: transparent;
+}
+
+#stencil-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-size: contain; /* Картинка всегда вписывается в рамку */
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 6;
+}
 
     </style>
 </head>
@@ -111,9 +113,9 @@
     <canvas id="glcanvas" width="1920" height="911"></canvas>
 
     <canvas id="glcanvas"></canvas>
-    <div id="safe-zone"></div>
+    <div id="safe-zone">
     <div id="stencil-overlay"></div>
-    </div>
+</div>
 
     <div class="ui-panel left-panel">
         <div class="panel-section">
@@ -126,28 +128,25 @@
             </div>
         </div>
 
-        <div class="panel-section" style="margin-top: 8px;">
-            <h3 class="panel-title">Формат (Safe Zone)</h3>
-            <div class="action-buttons">
-                <button class="safe-btn active" data-ratio="free" style="padding: 0;">Full</button>
-                <button class="safe-btn" data-ratio="16:9" style="padding: 0;">16:9</button>
-                <button class="safe-btn" data-ratio="9:16" style="padding: 0;">9:16</button>
-                <button class="safe-btn" data-ratio="1:1" style="padding: 0;">1:1</button>
-            </div>
-        </div>
-
-        <div class="panel-section" style="margin-top: 8px;">
-            <h3 class="panel-title">Мокап (Трафарет)</h3>
-            <div class="color-input-wrapper" style="padding: 0; position: relative;">
-                <select id="mockup-select" style="width: 100%; background: transparent; color: #fff; border: none; padding: 8px; outline: none; font-size: 13px; cursor: pointer; appearance: none;">
-                    <option value="none" style="background: #0f111a;">❌ Без трафарета (Full)</option>
-                    <option value="phone" style="background: #0f111a;">📱 Смартфон (9:16)</option>
-                    <option value="browser" style="background: #0f111a;">🌐 Окно браузера (16:9)</option>
-                    <option value="custom" style="background: #0f111a; color: #28C4FF;">📁 Загрузить свой PNG...</option>
-                </select>
-                <input type="file" id="custom-mockup-upload" accept="image/png, image/webp" style="display: none;">
-            </div>
-        </div>
+<div class="panel-section">
+    <h3 class="panel-title">Safe Zone & Трафарет</h3>
+    <div class="action-buttons" style="margin-bottom: 8px;">
+        <button class="safe-btn active" data-ratio="free">Full</button>
+        <button class="safe-btn" data-ratio="16:9">16:9</button>
+        <button class="safe-btn" data-ratio="9:16">9:16</button>
+        <button class="safe-btn" data-ratio="1:1">1:1</button>
+    </div>
+    
+    <div class="color-input-wrapper" style="padding: 0;">
+        <select id="mockup-select" style="width: 100%; background: transparent; color: #fff; border: none; padding: 8px; font-size: 13px; cursor: pointer; outline: none;">
+            <option value="none">❌ Без трафарета</option>
+            <option value="phone">📱 Смартфон (SVG)</option>
+            <option value="browser">🌐 Браузер (SVG)</option>
+            <option value="custom">📁 Загрузить свой PNG...</option>
+        </select>
+        <input type="file" id="custom-mockup-upload" accept="image/png" style="display: none;">
+    </div>
+</div>
 
 
         <div class="panel-section" style="margin-top: 8px;">
@@ -705,135 +704,101 @@
 
         setTimeout(render, 50);
 
-        // --- ЛОГИКА ТРАФАРЕТОВ И SAFE ZONE ---
-        let currentRatio = 'free';
-        const safeZoneEl = document.getElementById('safe-zone');
-        const stencilOverlay = document.getElementById('stencil-overlay');
-        const mockupSelect = document.getElementById('mockup-select');
+const safeZoneEl = document.getElementById('safe-zone');
+const stencilOverlay = document.getElementById('stencil-overlay');
+const mockupSelect = document.getElementById('mockup-select');
+const customUpload = document.getElementById('custom-mockup-upload');
 
-        // База трафаретов (здесь зашиты SVG, но ты можешь вставить ссылки на свои PNG)
-        const stencils = {
-            none: '',
-            // Минималистичный телефон (SVG)
-            phone: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100%25\' height=\'100%25\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'none\' stroke=\'%231a1b26\' stroke-width=\'36\' rx=\'45\'/%3E%3Crect x=\'50%25\' y=\'0\' width=\'130\' height=\'28\' fill=\'%231a1b26\' rx=\'14\' transform=\'translate(-65, 18)\'/%3E%3C/svg%3E")',
-            // Окно MacOS (SVG)
-            browser: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100%25\' height=\'100%25\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'none\' stroke=\'%231a1b26\' stroke-width=\'20\' rx=\'12\'/%3E%3Crect x=\'0\' y=\'0\' width=\'100%25\' height=\'32\' fill=\'%231a1b26\'/%3E%3Ccircle cx=\'20\' cy=\'16\' r=\'5\' fill=\'%23ff5f56\'/%3E%3Ccircle cx=\'38\' cy=\'16\' r=\'5\' fill=\'%23ffbd2e\'/%3E%3Ccircle cx=\'56\' cy=\'16\' r=\'5\' fill=\'%2327c93f\'/%3E%3C/svg%3E")'
+let currentRatio = 'free';
+let customMockupUrl = '';
+
+const stencils = {
+    none: '',
+    phone: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 300 600\'%3E%3Crect x=\'5\' y=\'5\' width=\'290\' height=\'590\' rx=\'40\' fill=\'none\' stroke=\'white\' stroke-width=\'4\' opacity=\'0.3\'/%3E%3Cpath d=\'M100 20 h100 a10 10 0 0 1 10 10 v5 a15 15 0 0 1 -15 15 h-90 a15 15 0 0 1 -15 -15 v-5 a10 10 0 0 1 10 -10\' fill=\'white\' opacity=\'0.2\'/%3E%3C/svg%3E")',
+    browser: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 800 450\'%3E%3Crect x=\'2\' y=\'2\' width=\'796\' height=\'446\' rx=\'8\' fill=\'none\' stroke=\'white\' stroke-width=\'2\' opacity=\'0.3\'/%3E%3Crect x=\'2\' y=\'2\' width=\'796\' height=\'30\' rx=\'8\' fill=\'white\' opacity=\'0.1\'/%3E%3Ccircle cx=\'15\' cy=\'15\' r=\'4\' fill=\'white\' opacity=\'0.5\'/%3E%3Ccircle cx=\'30\' cy=\'15\' r=\'4\' fill=\'white\' opacity=\'0.5\'/%3E%3Ccircle cx=\'45\' cy=\'15\' r=\'4\' fill=\'white\' opacity=\'0.5\'/%3E%3C/svg%3E")'
+};
+
+function updateSafeZoneLayout() {
+    if (currentRatio === 'free') {
+        safeZoneEl.style.display = 'none';
+        return;
+    }
+    
+    safeZoneEl.style.display = 'block';
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+    const maxW = winW * 0.8; // Ограничиваем рамку 80% экрана
+    const maxH = winH * 0.8;
+
+    let targetW, targetH;
+
+    if (currentRatio === '16:9') {
+        targetW = maxW; targetH = maxW * (9/16);
+        if (targetH > maxH) { targetH = maxH; targetW = maxH * (16/9); }
+    } else if (currentRatio === '9:16') {
+        targetH = maxH; targetW = maxH * (9/16);
+        if (targetW > maxW) { targetW = maxW; targetH = maxW * (16/9); }
+    } else if (currentRatio === '1:1') {
+        targetW = Math.min(maxW, maxH); targetH = targetW;
+    }
+
+    safeZoneEl.style.width = Math.floor(targetW) + 'px';
+    safeZoneEl.style.height = Math.floor(targetH) + 'px';
+}
+
+// Переключение кнопок форматов
+document.querySelectorAll('.safe-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.safe-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        currentRatio = e.currentTarget.getAttribute('data-ratio');
+        updateSafeZoneLayout();
+    });
+});
+
+// Выбор трафарета
+mockupSelect.addEventListener('change', (e) => {
+    const val = e.target.value;
+    if (val === 'custom') {
+        customUpload.click();
+        return;
+    }
+    
+    // Авто-пропорции под трафарет
+    if (val === 'phone') {
+        currentRatio = '9:16';
+        updateActiveBtn('9:16');
+    } else if (val === 'browser') {
+        currentRatio = '16:9';
+        updateActiveBtn('16:9');
+    }
+
+    stencilOverlay.style.backgroundImage = stencils[val] || '';
+    updateSafeZoneLayout();
+});
+
+// Загрузка своего PNG
+customUpload.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            customMockupUrl = ev.target.result;
+            stencilOverlay.style.backgroundImage = `url(${customMockupUrl})`;
+            // Для кастомного пнг оставляем текущий формат
+            updateSafeZoneLayout();
         };
+        reader.readAsDataURL(file);
+    }
+});
 
-        function updateSafeZone() {
-            if (currentRatio === 'free') {
-                safeZoneEl.style.display = 'none';
-                return;
-            }
-            
-            safeZoneEl.style.display = 'block';
-            const winW = window.innerWidth;
-            const winH = window.innerHeight;
-            
-            // Оставляем воздух по краям экрана, чтобы маска не прилипала
-            const maxW = winW - 100; 
-            const maxH = winH - 100;
+function updateActiveBtn(ratio) {
+    document.querySelectorAll('.safe-btn').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-ratio') === ratio);
+    });
+}
 
-            let targetW, targetH;
-
-            // Расчет правильных пропорций
-            if (currentRatio === '16:9') {
-                targetW = maxW; targetH = maxW * (9/16);
-                if (targetH > maxH) { targetH = maxH; targetW = maxH * (16/9); }
-            } else if (currentRatio === '9:16') {
-                targetH = maxH; targetW = maxH * (9/16);
-                if (targetW > maxW) { targetW = maxW; targetH = maxW * (16/9); }
-            }
-
-            safeZoneEl.style.width = Math.floor(targetW) + 'px';
-            safeZoneEl.style.height = Math.floor(targetH) + 'px';
-        }
-
-        // Слушатель выпадающего списка
-        const customUploadInput = document.getElementById('custom-mockup-upload');
-        let customMockupUrl = ''; // Здесь будем хранить URL загруженной картинки
-
-        // Функция применения выбранного мокапа
-        function applyMockup(val) {
-            if (val === 'phone') currentRatio = '9:16';
-            else if (val === 'browser') currentRatio = '16:9';
-            else if (val === 'custom_loaded') {
-                // При загрузке своей картинки даем пользователю 
-                // самому выбрать рамку кнопками "Формат"
-                currentRatio = 'free'; 
-            }
-            else currentRatio = 'free';
-
-            if (val === 'custom_loaded') {
-                 stencilOverlay.style.backgroundImage = `url(${customMockupUrl})`;
-            } else {
-                 stencilOverlay.style.backgroundImage = stencils[val] || '';
-            }
-            updateSafeZone();
-        }
-
-        // Слушатель выпадающего списка
-        mockupSelect.addEventListener('change', (e) => {
-            const val = e.target.value;
-            
-            if (val === 'custom') {
-                // Эмулируем клик по скрытому инпуту файла
-                customUploadInput.click();
-                // Сбрасываем селект обратно, чтобы кнопка "Загрузить" работала повторно
-                mockupSelect.value = customMockupUrl ? 'custom_loaded' : 'none'; 
-                return; 
-            }
-
-            applyMockup(val);
-        });
-
-        // Обработка загруженного файла
-        customUploadInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                customMockupUrl = event.target.result; // Получаем Data URL картинки
-                
-                // Проверяем, есть ли уже опция с загруженным файлом
-                let existingCustomOpt = document.getElementById('custom-loaded-opt');
-                if (!existingCustomOpt) {
-                    existingCustomOpt = document.createElement('option');
-                    existingCustomOpt.id = 'custom-loaded-opt';
-                    existingCustomOpt.value = 'custom_loaded';
-                    existingCustomOpt.style.background = '#0f111a';
-                    // Вставляем опцию сразу после "Без трафарета"
-                    mockupSelect.insertBefore(existingCustomOpt, mockupSelect.children[1]); 
-                }
-                
-                // Сокращаем имя файла, чтобы влезло в селект
-                let shortName = file.name;
-                if (shortName.length > 15) shortName = shortName.substring(0, 15) + '...';
-                existingCustomOpt.innerText = `🖼 Свой: ${shortName}`;
-                
-                // Применяем
-                mockupSelect.value = 'custom_loaded';
-                applyMockup('custom_loaded');
-            };
-            
-            // Читаем файл как Data URL (base64 строка)
-            reader.readAsDataURL(file);
-        });
-        
-        window.addEventListener('resize', updateSafeZone);
-        
-
-        document.querySelectorAll('.safe-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.safe-btn').forEach(b => b.classList.remove('active'));
-                e.currentTarget.classList.add('active');
-                currentRatio = e.currentTarget.getAttribute('data-ratio');
-                updateSafeZone();
-            });
-        });
-
-        window.addEventListener('resize', updateSafeZone);
+window.addEventListener('resize', updateSafeZoneLayout);
 
 
     </script>
