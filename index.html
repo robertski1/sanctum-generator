@@ -127,7 +127,7 @@
             <div id="stencil-info" style="font-size: 10px; color: #28C4FF; text-align: center; margin-top: -4px;"></div>
         </div>
 
-        
+
         <div class="panel-section" style="margin-top: 8px;">
             <h3 class="panel-title">Оптика и Размытие</h3>
             <div class="meta-controls clean">
@@ -518,6 +518,91 @@
             });
         });
 
+        // --- ЛОГИКА SAFE ZONE И ТРАФАРЕТОВ ---
+        const safeZone = document.getElementById('safe-zone');
+        const stencilOverlay = document.getElementById('stencil-overlay');
+        const stencilInput = document.getElementById('stencil-upload');
+        const stencilInfo = document.getElementById('stencil-info');
+        const btnLoadStencil = document.getElementById('btn-load-stencil');
+
+        let currentRatio = 'free';
+        let stencilActive = false;
+        let stencilRatio = 1;
+
+        function updateSafeZone() {
+            if (currentRatio === 'free' && !stencilActive) { 
+                safeZone.style.display = 'none'; 
+                return; 
+            }
+            safeZone.style.display = 'block';
+            
+            const padding = 100; // Отступы от краев экрана
+            const maxW = window.innerWidth - padding; 
+            const maxH = window.innerHeight - padding;
+            
+            let ratio = stencilActive ? stencilRatio : eval(currentRatio.replace(':','/'));
+            let w, h;
+            
+            if (maxW / maxH > ratio) { 
+                h = maxH; w = h * ratio; 
+            } else { 
+                w = maxW; h = w / ratio; 
+            }
+            
+            safeZone.style.width = Math.floor(w) + 'px'; 
+            safeZone.style.height = Math.floor(h) + 'px';
+        }
+
+        // 1. Слушатели кнопок форматов (16:9, 9:16 и т.д.)
+        document.querySelectorAll('.safe-btn[data-ratio]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.safe-btn[data-ratio]').forEach(b => b.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                currentRatio = e.currentTarget.getAttribute('data-ratio');
+                
+                // Отключаем трафарет при выборе стандартного формата
+                stencilActive = false; 
+                stencilOverlay.style.backgroundImage = 'none';
+                stencilInfo.innerText = '';
+                btnLoadStencil.innerText = '📁 Загрузить PNG мокап';
+                
+                updateSafeZone();
+            });
+        });
+
+        // 2. Загрузка пользовательского PNG
+        btnLoadStencil.addEventListener('click', () => stencilInput.click());
+        
+        stencilInput.addEventListener('change', (e) => {
+            const file = e.target.files[0]; 
+            if(!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Считываем пропорции загруженной картинки
+                    stencilRatio = img.naturalWidth / img.naturalHeight;
+                    stencilActive = true;
+                    currentRatio = 'custom';
+                    
+                    // Снимаем выделение с кнопок стандартных форматов
+                    document.querySelectorAll('.safe-btn[data-ratio]').forEach(b => b.classList.remove('active'));
+                    
+                    stencilOverlay.style.backgroundImage = `url(${ev.target.result})`;
+                    stencilInfo.innerText = `Размер: ${img.naturalWidth}x${img.naturalHeight}`;
+                    btnLoadStencil.innerText = '🔄 Сменить мокап';
+                    
+                    updateSafeZone();
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        window.addEventListener('resize', updateSafeZone);
+        // ---------------------------------------------
+
         // --- ЛОГИКА НАВИГАЦИИ (ПАН И ЗУМ) ---
         let isDrg = false, lx = 0, ly = 0, lpd = null, lpcx = 0, lpcy = 0;
         const scaleIn = document.getElementById('in-scale'), posXIn = document.getElementById('in-posX'), posYIn = document.getElementById('in-posY');
@@ -597,14 +682,37 @@
         document.getElementById('btn-download-4k').addEventListener('click', async (e) => {
             const btn = e.currentTarget; const o = btn.innerHTML; 
             btn.innerHTML = '⚙️ Ожидайте...'; await new Promise(r => setTimeout(r, 10));
-            const ow = canvas.width, oh = canvas.height, rw = 3840, rh = 2160;
             
+            const ow = canvas.width, oh = canvas.height;
+            const originalScale = parseFloat(document.getElementById('meta-scale').value) / 100.0;
+            
+            // 1. Считаем разрешение с учетом рамки (максимум 3840 по длинной стороне)
+            let rw = 3840, rh = 2160;
+            let exportRatio = stencilActive ? stencilRatio : (currentRatio === 'free' ? ow/oh : eval(currentRatio.replace(':','/')));
+            
+            if (exportRatio > 1) { 
+                rh = Math.round(3840 / exportRatio); 
+            } else { 
+                rh = 3840; rw = Math.round(3840 * exportRatio); 
+            }
+
+            // 2. Корректируем масштаб (Zoom), чтобы вырезать область внутри рамки
+            if (currentRatio !== 'free' || stencilActive) {
+                const rect = safeZone.getBoundingClientRect();
+                const zoom = ow / rect.width;
+                gl.uniform1f(locScale, originalScale * zoom);
+            }
+
+            // 3. Рендеринг 4K
             canvas.width = rw; canvas.height = rh; gl.viewport(0, 0, rw, rh); 
             gl.uniform2f(locRes, rw, rh); gl.drawArrays(gl.TRIANGLES, 0, 6);
             
             const p = new Uint8Array(rw * rh * 4); gl.readPixels(0, 0, rw, rh, gl.RGBA, gl.UNSIGNED_BYTE, p);
+            
+            // Возвращаем масштаб и размеры обратно для превью
             canvas.width = ow; canvas.height = oh; render(); 
             
+            // 4. Переворот WebGL и сохранение файла
             const fp = new Uint8Array(rw * rh * 4);
             for (let r = 0; r < rh; r++) for (let c = 0; c < rw; c++) { 
                 const si = (r * rw + c) * 4, di = ((rh - r - 1) * rw + c) * 4; 
@@ -618,7 +726,7 @@
             tc.toBlob((b) => { 
                 if (!b) { btn.innerHTML = 'Ошибка ❌'; setTimeout(() => btn.innerHTML = o, 800); return; } 
                 const url = URL.createObjectURL(b); const link = document.createElement('a'); 
-                link.href = url; link.download = 'glow-gradient-4k.png'; document.body.appendChild(link); 
+                link.href = url; link.download = 'sanctum-pro-4k.png'; document.body.appendChild(link); 
                 link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); 
                 showSuccessState(btn, 'Сохранено!'); 
             }, 'image/png', 1.0); 
