@@ -475,6 +475,13 @@
         }
         .custom-pcr-inp[type="number"] { -moz-appearance: textfield; }
 
+        /* Убираем искусственную задержку (анимацию) с миниатюры Pickr */
+        .pickr .pcr-button,
+        .pickr .pcr-button::after,
+        .pickr .pcr-button::before {
+            transition: none !important;
+        }
+        
     </style>
 </head>
 
@@ -1114,15 +1121,11 @@
                 const root = instance.getRoot().interaction;
                 const appRoot = instance.getRoot().app;
                 
-                // 1. ПЕРЕИМЕНОВЫВАЕМ СТАНДАРТНЫЕ КНОПКИ PICKR
-                const btnHex = appRoot.querySelector('input.pcr-type[value="HEXA"]');
-                if(btnHex) btnHex.value = 'HEX';
-                const btnRgb = appRoot.querySelector('input.pcr-type[value="RGBA"]');
-                if(btnRgb) btnRgb.value = 'RGB';
-                const btnHsl = appRoot.querySelector('input.pcr-type[value="HSLA"]');
-                if(btnHsl) btnHsl.value = 'HSL';
+                // Переименовываем кнопки
+                const btnHex = appRoot.querySelector('input.pcr-type[value="HEXA"]'); if(btnHex) btnHex.value = 'HEX';
+                const btnRgb = appRoot.querySelector('input.pcr-type[value="RGBA"]'); if(btnRgb) btnRgb.value = 'RGB';
+                const btnHsl = appRoot.querySelector('input.pcr-type[value="HSLA"]'); if(btnHsl) btnHsl.value = 'HSL';
 
-                // Создаем наш контейнер с инпутами
                 const customWrapper = document.createElement('div');
                 customWrapper.className = 'custom-pickr-inputs';
                 customWrapper.innerHTML = `
@@ -1136,7 +1139,6 @@
                 const i2 = customWrapper.querySelector('.i2');
                 const i3 = customWrapper.querySelector('.i3');
 
-                // Глушим события для защиты от закрытия
                 ['keydown', 'keyup', 'keypress', 'mousedown', 'mouseup', 'click', 'pointerdown'].forEach(evt => {
                     customWrapper.addEventListener(evt, e => e.stopPropagation());
                 });
@@ -1145,7 +1147,6 @@
                     const rep = instance.getColorRepresentation();
                     const color = instance.getColor();
                     
-                    // ДОБАВЛЕНЫ ПРОВЕРКИ НОВЫХ НАЗВАНИЙ (HEX, RGB, HSL)
                     if (rep === 'HEXA' || rep === 'HEX') {
                         i1.type = 'text'; i1.maxLength = 7;
                         if (document.activeElement !== i1) i1.value = color.toHEXA().toString().toUpperCase();
@@ -1171,11 +1172,8 @@
                     const rep = instance.getColorRepresentation();
                     let applied = false;
 
-                    // Обрезка до 3 символов
                     if (e && e.target && e.target.type === 'number') {
-                        if (e.target.value.length > 3) {
-                            e.target.value = e.target.value.slice(0, 3);
-                        }
+                        if (e.target.value.length > 3) e.target.value = e.target.value.slice(0, 3);
                     }
 
                     if (rep === 'HEXA' || rep === 'HEX') {
@@ -1188,23 +1186,17 @@
                         if (parseInt(i1.value) > 255) i1.value = 255;
                         if (parseInt(i2.value) > 255) i2.value = 255;
                         if (parseInt(i3.value) > 255) i3.value = 255;
-
-                        const r = parseInt(i1.value) || 0;
-                        const g = parseInt(i2.value) || 0;
-                        const b = parseInt(i3.value) || 0;
-                        applied = instance.setColor(`rgba(${r}, ${g}, ${b}, 1)`, true);
+                        applied = instance.setColor(`rgba(${parseInt(i1.value)||0}, ${parseInt(i2.value)||0}, ${parseInt(i3.value)||0}, 1)`, true);
                     } else if (rep === 'HSLA' || rep === 'HSL') {
                         if (parseInt(i1.value) > 360) i1.value = 360;
                         if (parseInt(i2.value) > 100) i2.value = 100;
                         if (parseInt(i3.value) > 100) i3.value = 100;
-
-                        const h = parseInt(i1.value) || 0;
-                        const s = parseInt(i2.value) || 0;
-                        const l = parseInt(i3.value) || 0;
-                        applied = instance.setColor(`hsla(${h}, ${s}%, ${l}%, 1)`, true);
+                        applied = instance.setColor(`hsla(${parseInt(i1.value)||0}, ${parseInt(i2.value)||0}%, ${parseInt(i3.value)||0}%, 1)`, true);
                     }
 
                     if (applied) {
+                        // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ:
+                        instance.applyColor(true); // Принудительно обновляем цвет кнопки на панели
                         textInput.value = instance.getColor().toHEXA().toString().toUpperCase();
                         render();
                     }
@@ -1217,7 +1209,6 @@
                 instance.on('change', updateCustomInputs);
                 
                 instance.getRoot().app.addEventListener('click', (e) => {
-                    // Строгая проверка, чтобы реагировало только на кнопки форматов
                     if(e.target.tagName.toLowerCase() === 'button' && e.target.classList.contains('pcr-type')) {
                         setTimeout(updateCustomInputs, 10);
                     }
@@ -1226,7 +1217,11 @@
                 setTimeout(updateCustomInputs, 50); 
             });
 
-            pickr.on('change', (color) => {
+            // Основной обработчик изменений (для мыши)
+            pickr.on('change', (color, source, instance) => {
+                // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ:
+                instance.applyColor(true); // Теперь миниатюра меняется сразу, пока ты водишь мышью
+                
                 textInput.value = color.toHEXA().toString().toUpperCase();
                 render();
             }).on('save', () => { pickr.hide(); });
