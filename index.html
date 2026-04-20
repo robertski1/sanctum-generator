@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sanctum Pro | Ultimate Generator</title>
+    <title>Advanced Fluid Glow Gradient + PRO</title>
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
@@ -17,6 +17,7 @@
             border: 1px solid rgba(240, 240, 240, 0.15); padding: 24px; border-radius: 4px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); z-index: 10;
         }
         .ui-panel::-webkit-scrollbar { width: 6px; }
+        .ui-panel::-webkit-scrollbar-track { background: transparent; }
         .ui-panel::-webkit-scrollbar-thumb { background: rgba(40, 196, 255, 0.3); border-radius: 4px; }
 
         .right-panel { top: 20px; right: 20px; width: 320px; max-height: calc(100vh - 140px); overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
@@ -28,132 +29,262 @@
         }
         .bottom-header { display: flex; justify-content: space-between; align-items: center; }
         
-        .preset-buttons { display: flex; flex-direction: row; gap: 8px; flex-wrap: wrap; max-height: 80px; overflow-y: auto; }
-        .preset-btn {
-            height: 32px; background: rgba(255,255,255,0.05); color: #eee; font-size: 12px;
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; transition: 0.2s;
-            padding: 0 16px; white-space: nowrap;
+        .preset-buttons {
+            display: flex; flex-direction: row; gap: 8px; flex-wrap: wrap; max-height: 80px; overflow-y: auto; padding-right: 8px;
         }
-        .preset-btn:hover { background: rgba(255,255,255,0.15); }
+        .preset-buttons::-webkit-scrollbar { width: 4px; }
+        .preset-buttons::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px;}
+        .preset-buttons::-webkit-scrollbar-thumb { background: rgba(40, 196, 255, 0.5); border-radius: 4px; }
+
+        .preset-btn {
+            flex: 0 0 auto; height: 32px; background: rgba(255,255,255,0.05); color: #eee; font-size: 12px;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; padding: 0 16px; white-space: nowrap;
+        }
+        .preset-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
         .preset-btn.custom { border-color: rgba(40, 196, 255, 0.4); color: #28C4FF; }
+        .preset-btn.custom:hover { background: rgba(40, 196, 255, 0.15); }
 
         .panel-section { display: flex; flex-direction: column; gap: 12px; }
         .panel-title { margin: 0; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
+        .bottom-panel .panel-title { border: none; padding: 0; border-bottom: none; }
 
         .mode-buttons { display: flex; flex-direction: column; gap: 8px; }
-        .mode-btn { justify-content: flex-start; background: rgba(0, 0, 0, 0.4); color: #aaa; border: 1px solid rgba(255, 255, 255, 0.05); font-size: 13px; height: 36px; border-radius: 2px; cursor: pointer; }
+        .mode-btn { justify-content: flex-start; background: rgba(0, 0, 0, 0.4); color: #aaa; border: 1px solid rgba(255, 255, 255, 0.05); font-size: 13px; height: 36px; }
         .mode-btn.active { background: rgba(40, 196, 255, 0.15); color: #28C4FF; border-color: rgba(40, 196, 255, 0.3); }
+        .mode-btn .icon { font-size: 16px; margin-right: 8px; }
 
         .color-block { display: flex; flex-direction: column; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .color-block.no-border { border-bottom: none; padding-bottom: 0; }
         .control-group { display: flex; justify-content: space-between; align-items: center; }
+        .control-group label { font-size: 14px; color: #eee; font-weight: 500; }
         .color-input-wrapper { display: flex; align-items: center; gap: 8px; background: rgba(0, 0, 0, 0.4); padding: 4px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.1); }
-        input[type="color"] { -webkit-appearance: none; border: none; width: 24px; height: 24px; cursor: pointer; background: transparent; padding: 0; }
-        input[type="text"].hex-input { width: 60px; background: transparent; border: none; color: #fff; font-family: monospace; font-size: 12px; outline: none; }
+        input[type="color"] { -webkit-appearance: none; border: none; width: 24px; height: 24px; border-radius: 2px; cursor: pointer; background: transparent; padding: 0; }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
+        input[type="text"].hex-input { width: 60px; background: transparent; border: none; color: #fff; font-family: monospace; font-size: 12px; text-transform: uppercase; outline: none; }
 
+        .meta-controls { display: flex; flex-direction: column; gap: 16px; background: rgba(0, 0, 0, 0.2); padding: 16px 12px; border-radius: 4px; margin-bottom: 8px; }
+        .meta-controls.clean { background: transparent; padding: 0; margin-bottom: 0; gap: 14px; }
         .slider-row { display: flex; flex-direction: column; gap: 6px; }
-        .slider-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #ccc; }
-        .slider-header span { color: #28C4FF; font-family: monospace; }
-        input[type="range"] { width: 100%; accent-color: #28C4FF; cursor: pointer; }
+        .slider-header { display: flex; justify-content: space-between; align-items: center; }
+        .slider-header label { font-size: 12px; color: #ccc; font-weight: 500; }
+        .slider-header span { font-size: 11px; color: #28C4FF; font-family: monospace; }
+        input[type="range"] { width: 100%; accent-color: #28C4FF; height: 4px; }
 
         .buttons-group { display: flex; flex-direction: column; gap: 8px; }
         .action-buttons { display: flex; gap: 8px; }
-        button.primary { background: #28C4FF; color: #0F111A; height: 40px; font-weight: 600; width: 100%; border: none; cursor: pointer; border-radius: 2px; }
-        button.secondary { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); height: 40px; flex: 1; cursor: pointer; border-radius: 2px; }
-        
-        .safe-btn { flex: 1; height: 32px; font-size: 11px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #888; cursor: pointer; }
-        .safe-btn.active { border-color: #28C4FF; color: #28C4FF; background: rgba(40, 196, 255, 0.1); }
-
-        /* --- Safe Zone & Stencil --- */
-        #safe-zone {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.85); border: 1px solid rgba(255, 255, 255, 0.3);
-            pointer-events: none; z-index: 5; display: none; overflow: hidden;
-        }
-        #stencil-overlay { width: 100%; height: 100%; background-size: 100% 100%; background-repeat: no-repeat; }
+        button { flex: 1; border: none; height: 40px; padding: 0 12px; border-radius: 2px; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        button:hover { filter: brightness(1.15); }
+        button.primary { background: #28C4FF; color: #0F111A; width: 100%; font-weight: 400; font-size: 14px; }
+        button.secondary { background: rgba(15, 17, 26, 0.35); backdrop-filter: blur(110px); -webkit-backdrop-filter: blur(110px); color: #fff; font-weight: 400; font-size: 14px; border: 1px solid rgba(255,255,255,0.05); }
+        button.secondary:hover { background: rgba(40, 196, 255, 0.15); color: #28C4FF; border-color: rgba(40, 196, 255, 0.3); }
+        .btn-small { height: 32px; font-size: 12px; }
     </style>
 </head>
 <body>
 
     <canvas id="glcanvas"></canvas>
-    <div id="safe-zone"><div id="stencil-overlay"></div></div>
 
     <div class="ui-panel left-panel">
         <div class="panel-section">
             <h3 class="panel-title">Стиль генерации</h3>
             <div class="mode-buttons">
-                <button class="mode-btn active" data-mode="0">🫧 Fluid Lava</button>
-                <button class="mode-btn" data-mode="1">🌌 Aurora</button>
-                <button class="mode-btn" data-mode="2">🌫️ Grainy Mesh</button>
-                <button class="mode-btn" data-mode="3">💿 Foil / Oil Spill</button>
+                <button class="mode-btn active" data-mode="0"><span class="icon">🫧</span> Fluid Lava</button>
+                <button class="mode-btn" data-mode="1"><span class="icon">🌌</span> Aurora</button>
+                <button class="mode-btn" data-mode="2"><span class="icon">🌫️</span> Grainy Mesh</button>
+                <button class="mode-btn" data-mode="3"><span class="icon">💿</span> Foil / Oil Spill</button>
+            </div>
+        </div>
+
+        <div class="panel-section" style="margin-top: 8px;">
+            <h3 class="panel-title">Оптика и Размытие</h3>
+            <div class="meta-controls clean">
+                <div class="slider-row">
+                    <div class="slider-header"><label>RGB Смещение</label><span id="val-rgb">0.00</span></div>
+                    <input type="range" id="opt-rgb" min="0.0" max="1.0" step="0.05" value="0.0">
+                </div>
+                <div class="slider-row">
+                    <div class="slider-header"><label>Радиальное размытие</label><span id="val-zoom">0.00</span></div>
+                    <input type="range" id="opt-zoom" min="0.0" max="1.0" step="0.05" value="0.0">
+                </div>
+                <div class="slider-row">
+                    <div class="slider-header"><label>Искажение стекла</label><span id="val-glass">0.00</span></div>
+                    <input type="range" id="opt-glass" min="0.0" max="1.0" step="0.05" value="0.0">
+                </div>
             </div>
         </div>
 
         <div class="panel-section">
-            <h3 class="panel-title">Safe Zone & Трафарет</h3>
-            <div class="action-buttons">
-                <button class="safe-btn active" data-ratio="free">Full</button>
-                <button class="safe-btn" data-ratio="16:9">16:9</button>
-                <button class="safe-btn" data-ratio="9:16">9:16</button>
-                <button class="safe-btn" data-ratio="1:1">1:1</button>
-            </div>
-            <button id="btn-load-stencil" class="secondary" style="width: 100%; font-size: 11px; height: 32px; border-style: dashed;">📁 Загрузить PNG мокап</button>
-            <input type="file" id="stencil-upload" accept="image/png" style="display: none;">
-            <div id="stencil-info" style="font-size: 10px; color: #28C4FF; text-align: center; margin-top: -5px;"></div>
-        </div>
-
-        <div class="panel-section">
-            <h3 class="panel-title">Оптика</h3>
-            <div class="slider-row">
-                <div class="slider-header"><label>RGB Смещение</label><span id="val-rgb">0.00</span></div>
-                <input type="range" id="opt-rgb" min="0" max="1" step="0.05" value="0">
-            </div>
-            <div class="slider-row">
-                <div class="slider-header"><label>Zoom Blur</label><span id="val-zoom">0.00</span></div>
-                <input type="range" id="opt-zoom" min="0" max="1" step="0.05" value="0">
+            <h3 class="panel-title">Цветокоррекция</h3>
+            <div class="meta-controls clean">
+                <div class="slider-row">
+                    <div class="slider-header"><label>Экспозиция</label><span id="val-exposure">0.00</span></div>
+                    <input type="range" id="post-exposure" min="-2.0" max="2.0" step="0.1" value="0.0">
+                </div>
+                <div class="slider-row">
+                    <div class="slider-header"><label>Контраст</label><span id="val-contrast">1.00</span></div>
+                    <input type="range" id="post-contrast" min="0.5" max="2.0" step="0.05" value="1.0">
+                </div>
+                <div class="slider-row">
+                    <div class="slider-header"><label>Насыщенность</label><span id="val-saturation">1.00</span></div>
+                    <input type="range" id="post-saturation" min="0.0" max="3.0" step="0.1" value="1.0">
+                </div>
             </div>
         </div>
     </div>
 
     <div class="ui-panel right-panel">
-        <div class="panel-section">
-            <h3 class="panel-title">Цвета</h3>
-            <div class="color-block">
-                <div class="control-group"><label>Background</label><div class="color-input-wrapper"><input type="color" id="in-colorBg-picker" value="#0f111a"><input type="text" id="in-colorBg-text" class="hex-input" value="#0F111A"></div></div>
-                <div class="control-group"><label>Accent 1</label><div class="color-input-wrapper"><input type="color" id="in-colorOuter-picker" value="#0e3c4a"><input type="text" id="in-colorOuter-text" class="hex-input" value="#0E3C4A"></div></div>
-                <div class="control-group"><label>Accent 2</label><div class="color-input-wrapper"><input type="color" id="in-colorWarp-picker" value="#28c4ff"><input type="text" id="in-colorWarp-text" class="hex-input" value="#28C4FF"></div></div>
-                <div class="control-group"><label>Accent 3</label><div class="color-input-wrapper"><input type="color" id="in-colorAccent-picker" value="#f0f0f0"><input type="text" id="in-colorAccent-text" class="hex-input" value="#F0F0F0"></div></div>
+        <div class="color-block">
+            <div class="control-group">
+                <label>Фон градиента</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="in-colorBg-picker" value="#0f111a"><input type="text" id="in-colorBg-text" class="hex-input" value="#0F111A" maxlength="7">
+                </div>
+            </div>
+        </div>
+        <div class="color-block">
+            <div class="control-group">
+                <label>Первый слой</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="in-colorOuter-picker" value="#0e3c4a"><input type="text" id="in-colorOuter-text" class="hex-input" value="#0E3C4A" maxlength="7">
+                </div>
+            </div>
+        </div>
+        <div class="color-block">
+            <div class="control-group">
+                <label>Второй слой</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="in-colorWarp-picker" value="#28c4ff"><input type="text" id="in-colorWarp-text" class="hex-input" value="#28C4FF" maxlength="7">
+                </div>
+            </div>
+        </div>
+        <div class="color-block no-border">
+            <div class="control-group">
+                <label>Третий слой</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="in-colorAccent-picker" value="#f0f0f0"><input type="text" id="in-colorAccent-text" class="hex-input" value="#F0F0F0" maxlength="7">
+                </div>
             </div>
         </div>
 
-        <div class="panel-section">
-            <h3 class="panel-title">Параметры шума</h3>
+        <div class="meta-controls">
             <div class="slider-row">
                 <div class="slider-header"><label>Размер пятна</label><span id="val-scale">50%</span></div>
-                <input type="range" id="meta-scale" min="10" max="200" value="50">
+                <input type="range" id="meta-scale" min="0" max="100" value="50">
             </div>
             <div class="slider-row">
-                <div class="slider-header"><label>Мягкость</label><span id="val-softness">60%</span></div>
+                <div class="slider-header"><label>Мягкость (Blur)</label><span id="val-softness">60%</span></div>
                 <input type="range" id="meta-softness" min="0" max="100" value="60">
+            </div>
+            <div class="slider-row">
+                <div class="slider-header"><label>Яркость ядра</label><span id="val-core">40%</span></div>
+                <input type="range" id="meta-core" min="0" max="100" value="40">
             </div>
         </div>
 
+        <div style="display: none;"><input type="hidden" id="in-scale" value="0.5"><input type="hidden" id="in-posX" value="-1"><input type="hidden" id="in-posY" value="-1"></div>
+
         <div class="buttons-group">
-            <button id="btn-generate" class="primary">Сгенерировать новый сид</button>
-            <button id="btn-download-4k" class="secondary" style="background: #28C4FF; color: #000; font-weight: bold;">Скачать 4K PNG</button>
+            <button id="btn-generate" class="primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                Новый сид (Random)
+            </button>
+            <button id="btn-download-4k" class="secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Скачать 4K
+            </button>
+            <div class="action-buttons">
+                <button id="btn-save-default" class="secondary btn-small" title="Сохранить текущие настройки как базовые">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    По умолч.
+                </button>
+                <button id="btn-reset" class="secondary btn-small">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
+                    Сброс
+                </button>
+            </div>
         </div>
     </div>
 
     <div class="ui-panel bottom-panel">
-        <div class="bottom-header"><h3 class="panel-title">Пресеты</h3><button id="btn-save-preset" class="secondary" style="height: 28px; font-size: 11px; width: auto; padding: 0 10px;">+ Сохранить</button></div>
+        <div class="bottom-header" style="width: 100%;">
+            <h3 class="panel-title" style="font-size: 13px;">Пресеты</h3>
+            <button id="btn-save-preset" class="secondary btn-small" style="width: auto; padding: 0 16px; height: 28px;">
+                + Сохранить пресет
+            </button>
+        </div>
         <div class="preset-buttons" id="preset-container"></div>
     </div>
 
     <script>
         const canvas = document.getElementById('glcanvas');
-        const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
 
-        // --- Shader Sources (Original Robust Version) ---
+        let currentMode = 0;
+
+        // --- БАЗА ВСТРОЕННЫХ ПРЕСЕТОВ ---
+        const builtInPresets = {
+            0: [ 
+                { name: "Radiant Rush", bg: "#0F111A", c1: "#FF0055", c2: "#00E5FF", c3: "#FFFFFF", scale: 60, soft: 70, core: 50, rgb: 0.15, zoom: 0.1 },
+                { name: "Deep Ocean", bg: "#020B14", c1: "#0044FF", c2: "#00E5FF", c3: "#FFFFFF", scale: 45, soft: 65, core: 35 },
+                { name: "Toxic Frag", bg: "#0D1A00", c1: "#33FF00", c2: "#00FFCC", c3: "#E6FF00", scale: 55, soft: 80, core: 40, glass: 0.2 },
+                { name: "Magma Core", bg: "#1A0500", c1: "#FF2A00", c2: "#FF7B00", c3: "#FFDD00", scale: 50, soft: 50, core: 60, exp: 0.1 },
+                { name: "Lavender Dream", bg: "#110B17", c1: "#8A2BE2", c2: "#DDA0DD", c3: "#FFFFFF", scale: 65, soft: 85, core: 30 },
+                { name: "Miami Night", bg: "#050014", c1: "#FF007F", c2: "#00F0FF", c3: "#7000FF", scale: 70, soft: 60, core: 45, rgb: 0.1 },
+                { name: "Matcha Latte", bg: "#141A14", c1: "#4F7942", c2: "#8FBC8F", c3: "#F5FFFA", scale: 80, soft: 90, core: 20 },
+                { name: "Blood Moon", bg: "#0A0000", c1: "#8B0000", c2: "#DC143C", c3: "#FF6347", scale: 55, soft: 40, core: 70, cont: 1.2 },
+                { name: "Golden Hour", bg: "#1A0F05", c1: "#FF4500", c2: "#FF8C00", c3: "#FFD700", scale: 60, soft: 75, core: 55 },
+                { name: "Deep Space", bg: "#000005", c1: "#00008B", c2: "#4B0082", c3: "#E6E6FA", scale: 40, soft: 80, core: 25 }
+            ],
+            1: [ 
+                { name: "Lumen Stream", bg: "#050B14", c1: "#00FF88", c2: "#00F0FF", c3: "#FFFFFF", scale: 65, soft: 50, core: 45, exp: 0.2 },
+                { name: "Night Market", bg: "#120024", c1: "#FF00CC", c2: "#00FFFF", c3: "#FFB8FF", scale: 70, soft: 40, core: 60, zoom: 0.2 },
+                { name: "Arctic Fox", bg: "#000A14", c1: "#00BFFF", c2: "#87CEFA", c3: "#FFFFFF", scale: 60, soft: 55, core: 50 },
+                { name: "Solar Flare", bg: "#140500", c1: "#FF4500", c2: "#FFD700", c3: "#FFFFE0", scale: 75, soft: 35, core: 65, exp: 0.3 },
+                { name: "Crimson Wave", bg: "#140005", c1: "#DC143C", c2: "#FF1493", c3: "#FFB6C1", scale: 55, soft: 45, core: 55 },
+                { name: "Phantom Light", bg: "#050514", c1: "#483D8B", c2: "#7B68EE", c3: "#E6E6FA", scale: 80, soft: 65, core: 35, glass: 0.1 },
+                { name: "Neon City", bg: "#0A0014", c1: "#FF00FF", c2: "#0000FF", c3: "#00FFFF", scale: 60, soft: 30, core: 70, rgb: 0.2 },
+                { name: "Dawn Chorus", bg: "#140A05", c1: "#FF69B4", c2: "#FFA500", c3: "#FFFFE0", scale: 70, soft: 60, core: 40 },
+                { name: "Emerald Isle", bg: "#001405", c1: "#006400", c2: "#32CD32", c3: "#98FB98", scale: 50, soft: 50, core: 45 },
+                { name: "Ultraviolet", bg: "#05000A", c1: "#8A2BE2", c2: "#9400D3", c3: "#DDA0DD", scale: 65, soft: 40, core: 60, cont: 1.1 }
+            ],
+            2: [ 
+                { name: "Tactical Matte", bg: "#E2D9D1", c1: "#D4A373", c2: "#E9EDC9", c3: "#FAEDCD", scale: 80, soft: 100, core: 20, exp: 0.2, cont: 1.1, sat: 0.8 },
+                { name: "Dark Sector", bg: "#1A1A1D", c1: "#4E4E50", c2: "#6F2232", c3: "#950740", scale: 90, soft: 100, core: 15, exp: 0.0, cont: 1.2, sat: 1.1 },
+                { name: "Dune", bg: "#C2B280", c1: "#8C7355", c2: "#D8C3A5", c3: "#EAE0C8", scale: 85, soft: 100, core: 25, sat: 0.7 },
+                { name: "Concrete", bg: "#808080", c1: "#696969", c2: "#A9A9A9", c3: "#D3D3D3", scale: 95, soft: 100, core: 10, sat: 0.0 },
+                { name: "Slate & Copper", bg: "#2F4F4F", c1: "#1A2421", c2: "#B87333", c3: "#CD7F32", scale: 75, soft: 90, core: 30, cont: 1.3 },
+                { name: "Muted Forest", bg: "#2E3F32", c1: "#1D291F", c2: "#4A5D23", c3: "#8F9779", scale: 80, soft: 100, core: 20, sat: 0.8 },
+                { name: "Frostbite", bg: "#E0FFFF", c1: "#B0C4DE", c2: "#ADD8E6", c3: "#FFFFFF", scale: 85, soft: 95, core: 40, exp: 0.1 },
+                { name: "Midnight Velvet", bg: "#0A0A2A", c1: "#191970", c2: "#483D8B", c3: "#000000", scale: 90, soft: 100, core: 10, cont: 1.1 },
+                { name: "Sepia Film", bg: "#704214", c1: "#5E2612", c2: "#A0522D", c3: "#CD853F", scale: 80, soft: 100, core: 25, sat: 0.6, exp: 0.1 },
+                { name: "Obsidian", bg: "#0B0B0B", c1: "#1C1C1C", c2: "#383838", c3: "#555555", scale: 95, soft: 90, core: 15, cont: 1.4 }
+            ],
+            3: [ 
+                { name: "Oil Slick", bg: "#0D0E15", c1: "#4D00FF", c2: "#FF007F", c3: "#00FFCC", scale: 65, soft: 20, core: 50, rgb: 0.35, zoom: 0.0, glass: 0.15 },
+                { name: "Holo Sticker", bg: "#E0E5EC", c1: "#FF9DE2", c2: "#00E5FF", c3: "#E8FF8E", scale: 75, soft: 45, core: 60, rgb: 0.1, zoom: 0.0, glass: 0.0 },
+                { name: "Dark Bismuth", bg: "#000000", c1: "#2B00FF", c2: "#FF0040", c3: "#FFD700", scale: 50, soft: 25, core: 45, rgb: 0.4, zoom: 0.1, glass: 0.0 },
+                { name: "Chrome Pearl", bg: "#F5F5F5", c1: "#DDA0DD", c2: "#B0E0E6", c3: "#FFF0F5", scale: 70, soft: 50, core: 65, rgb: 0.05 },
+                { name: "Molten Gold", bg: "#1A1100", c1: "#8B6508", c2: "#DAA520", c3: "#FFD700", scale: 60, soft: 35, core: 55, glass: 0.1 },
+                { name: "Cyber Puddle", bg: "#050014", c1: "#39FF14", c2: "#FF00FF", c3: "#9400D3", scale: 80, soft: 15, core: 40, rgb: 0.5 },
+                { name: "Platinum Rose", bg: "#1A1A1A", c1: "#C0C0C0", c2: "#B76E79", c3: "#E0BFB8", scale: 65, soft: 40, core: 50, cont: 1.2 },
+                { name: "Alien Blood", bg: "#000A00", c1: "#006400", c2: "#8A2BE2", c3: "#C0C0C0", scale: 55, soft: 25, core: 45, zoom: 0.15 },
+                { name: "Scarab Beetle", bg: "#000A14", c1: "#008080", c2: "#0000CD", c3: "#B87333", scale: 75, soft: 30, core: 50, glass: 0.2 },
+                { name: "Titanium", bg: "#0A0A0A", c1: "#2F4F4F", c2: "#778899", c3: "#B0C4DE", scale: 85, soft: 45, core: 60, cont: 1.3 }
+            ]
+        };
+
+        // Загрузка пользовательских пресетов из localStorage
+        let customPresets = JSON.parse(localStorage.getItem('glowGradientCustomPresets')) || { 0: [], 1: [], 2: [], 3: [] };
+
+        let defaultSettings = { 
+            colorBg: '#0f111a', colorOuter: '#0e3c4a', colorWarp: '#28c4ff', colorAccent: '#f0f0f0', 
+            scale: '50', softness: '60', core: '40', optRgb: '0.0', optZoom: '0.0', optGlass: '0.0', exposure: '0.0', contrast: '1.0', saturation: '1.0'
+        };
+
         const vsSource = `attribute vec2 a_position; void main() { gl_Position = vec4(a_position, 0.0, 1.0); }`;
+
         const fsSource = `
             precision highp float;
             uniform vec2 u_resolution; uniform float u_seed; uniform int u_mode;
@@ -171,20 +302,26 @@
 
             vec3 getBaseColor(vec2 st, vec2 fragCoord) {
                 if (u_glass > 0.0) { st.y += sin(st.x * 15.0 + u_seed) * u_glass * 0.04; st.x += cos(st.y * 15.0 - u_seed) * u_glass * 0.04; }
-                vec2 pos = (st - u_posOffset) * (u_scale / 100.0); float finalValue = 0.0;
+                vec2 pos = (st - u_posOffset) * u_scale; float finalValue = 0.0;
+
                 if (u_mode == 0) {
                     vec2 q = vec2(noise(pos + u_seed), noise(pos + vec2(5.2, 1.3) - u_seed));
                     vec2 r = vec2(noise(pos + 3.0 * q + vec2(1.7, 9.2)), noise(pos + 3.0 * q + vec2(8.3, 2.8)));
                     finalValue = noise(pos + 3.0 * r) * 0.5 + 0.5;
                 } else if (u_mode == 1) {
-                    vec2 p = pos * vec2(0.5, 2.0); p.y += noise(p * 2.0 + u_seed) * 0.5;
+                    vec2 p = pos * vec2(0.5, 2.0); p.y += noise(p * 2.0 + u_seed) * 0.5; p.x += u_seed * 0.1;
                     finalValue = noise(p * 3.0) * 0.5 + 0.5;
                 } else if (u_mode == 2) {
-                    finalValue = noise(pos * 0.5 + u_seed) * 0.5 + 0.5;
+                    vec2 q = vec2(noise(pos * 0.5 + u_seed), noise(pos * 0.5 - u_seed));
+                    float smoothGrad = noise(pos * 0.5 + q) * 0.5 + 0.5;
+                    vec2 uvGrain = fragCoord / 2.0; float grain = fract(sin(dot(uvGrain + u_seed, vec2(12.9898, 78.233))) * 43758.5453);
+                    finalValue = mix(smoothGrad, grain, 0.18); 
                 } else if (u_mode == 3) {
-                    float n = noise(pos * 1.5 + u_seed);
-                    finalValue = smoothstep(-0.8, 0.8, sin(n * 30.0));
+                    vec2 p = pos * 1.2; vec2 flow = vec2(noise(p + u_seed), noise(p + vec2(7.3, 2.8) - u_seed));
+                    p += (flow - 0.5) * 5.0; float n = noise(p * 1.5); float rings = sin(n * 30.0 + flow.x * 10.0);
+                    finalValue = smoothstep(-0.8, 0.8, rings);
                 }
+
                 vec3 color = u_colorBg;
                 color = mix(color, u_colorOuter, smoothstep(u_outerStart, u_outerEnd, finalValue));
                 color = mix(color, u_colorWarp, smoothstep(u_warpStart, u_warpEnd, finalValue));
@@ -195,244 +332,289 @@
             void main() {
                 vec2 st = gl_FragCoord.xy / u_resolution.xy; st.x *= u_resolution.x / u_resolution.y;
                 vec2 center = vec2(0.5 * (u_resolution.x / u_resolution.y), 0.5); vec2 dir = st - center;
+
                 vec3 color = vec3(0.0); float totalWeight = 0.0;
                 for(int i = 0; i < 5; i++) {
                     float f = float(i) / 4.0;
-                    vec2 offsetST = st - dir * (u_zoomBlur * 0.2 * f);
+                    vec2 offsetST = st - dir * (u_zoomBlur * 0.2 * f); vec2 offsetFrag = gl_FragCoord.xy - (gl_FragCoord.xy - u_resolution.xy * 0.5) * (u_zoomBlur * 0.2 * f);
                     float shift = u_rgbShift * 0.03;
-                    float r = getBaseColor(offsetST + dir * shift, gl_FragCoord.xy).r;
-                    float g = getBaseColor(offsetST, gl_FragCoord.xy).g;
-                    float b = getBaseColor(offsetST - dir * shift, gl_FragCoord.xy).b;
+                    float r = getBaseColor(offsetST + dir * shift, offsetFrag).r; float g = getBaseColor(offsetST, offsetFrag).g; float b = getBaseColor(offsetST - dir * shift, offsetFrag).b;
                     color += vec3(r, g, b); totalWeight += 1.0;
                 }
-                gl_FragColor = vec4(clamp(color / totalWeight, 0.0, 1.0), 1.0);
+                color /= totalWeight;
+
+                color *= exp2(u_exposure); color = (color - 0.5) * u_contrast + 0.5;
+                float luminance = dot(color, vec3(0.2126, 0.7152, 0.0722)); color = mix(vec3(luminance), color, u_saturation);
+                gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
             }
         `;
 
-        // --- Initialization ---
-        function createShader(gl, type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
-        const program = gl.createProgram();
-        gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vsSource));
-        gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fsSource));
-        gl.linkProgram(program); gl.useProgram(program);
+        function createShader(gl, type, source) { const shader = gl.createShader(type); gl.shaderSource(shader, source); gl.compileShader(shader); if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return null; return shader; }
+        
+        const program = gl.createProgram(); gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vsSource)); gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fsSource)); gl.linkProgram(program); gl.useProgram(program);
+        const positionBuffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0]), gl.STATIC_DRAW);
+        const posLoc = gl.getAttribLocation(program, "a_position"); gl.enableVertexAttribArray(posLoc); gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
-        const posBuffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
-        const aPos = gl.getAttribLocation(program, "a_position"); gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+        const locRes = gl.getUniformLocation(program, "u_resolution"); const locSeed = gl.getUniformLocation(program, "u_seed"); const locMode = gl.getUniformLocation(program, "u_mode");
+        const locColorBg = gl.getUniformLocation(program, "u_colorBg"); const locColorOuter = gl.getUniformLocation(program, "u_colorOuter");
+        const locColorWarp = gl.getUniformLocation(program, "u_colorWarp"); const locColorAccent = gl.getUniformLocation(program, "u_colorAccent");
+        const locOuterStart = gl.getUniformLocation(program, "u_outerStart"); const locOuterEnd = gl.getUniformLocation(program, "u_outerEnd");
+        const locWarpStart = gl.getUniformLocation(program, "u_warpStart"); const locWarpEnd = gl.getUniformLocation(program, "u_warpEnd");
+        const locAccentStart = gl.getUniformLocation(program, "u_accentStart"); const locAccentEnd = gl.getUniformLocation(program, "u_accentEnd");
+        const locScale = gl.getUniformLocation(program, "u_scale"); const locPosOffset = gl.getUniformLocation(program, "u_posOffset");
+        
+        const locExposure = gl.getUniformLocation(program, "u_exposure"); const locContrast = gl.getUniformLocation(program, "u_contrast");
+        const locSaturation = gl.getUniformLocation(program, "u_saturation"); const locRgbShift = gl.getUniformLocation(program, "u_rgbShift");
+        const locZoomBlur = gl.getUniformLocation(program, "u_zoomBlur"); const locGlass = gl.getUniformLocation(program, "u_glass");
 
-        const locRes = gl.getUniformLocation(program, "u_resolution");
-        const locSeed = gl.getUniformLocation(program, "u_seed");
-        const locMode = gl.getUniformLocation(program, "u_mode");
-        const locColorBg = gl.getUniformLocation(program, "u_colorBg");
-        const locColorOuter = gl.getUniformLocation(program, "u_colorOuter");
-        const locColorWarp = gl.getUniformLocation(program, "u_colorWarp");
-        const locColorAccent = gl.getUniformLocation(program, "u_colorAccent");
-        const locOuterStart = gl.getUniformLocation(program, "u_outerStart");
-        const locOuterEnd = gl.getUniformLocation(program, "u_outerEnd");
-        const locWarpStart = gl.getUniformLocation(program, "u_warpStart");
-        const locWarpEnd = gl.getUniformLocation(program, "u_warpEnd");
-        const locAccentStart = gl.getUniformLocation(program, "u_accentStart");
-        const locAccentEnd = gl.getUniformLocation(program, "u_accentEnd");
-        const locScale = gl.getUniformLocation(program, "u_scale");
-        const locPosOffset = gl.getUniformLocation(program, "u_posOffset");
-        const locRgbShift = gl.getUniformLocation(program, "u_rgbShift");
-        const locZoomBlur = gl.getUniformLocation(program, "u_zoomBlur");
-        const locGlass = gl.getUniformLocation(program, "u_glass");
-
-        let currentSeed = Math.random() * 100, currentMode = 0, currentRatio = 'free';
-        let posX = -1, posY = -1, scaleVal = 50;
-        let stencilActive = false, stencilRatio = 1;
-
-        function hexToRgb(hex) {
-            hex = hex.replace('#','');
-            return [parseInt(hex.slice(0,2),16)/255, parseInt(hex.slice(2,4),16)/255, parseInt(hex.slice(4,6),16)/255];
-        }
+        let currentSeed = Math.random() * 100.0;
+        
+        function hexToRgb(hex) { hex = hex.replace(/^#/, ''); if (hex.length === 3) hex = hex.split('').map(c => c + c).join(''); return [parseInt(hex.slice(0, 2), 16) / 255 || 0, parseInt(hex.slice(2, 4), 16) / 255 || 0, parseInt(hex.slice(4, 6), 16) / 255 || 0]; }
 
         function render() {
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.floor(canvas.clientWidth * dpr); canvas.height = Math.floor(canvas.clientHeight * dpr);
             gl.viewport(0, 0, canvas.width, canvas.height);
-            gl.uniform2f(locRes, canvas.width, canvas.height);
-            gl.uniform1f(locSeed, currentSeed);
-            gl.uniform1i(locMode, currentMode);
             
-            const cBg = hexToRgb(document.getElementById('in-colorBg-text').value);
-            const cOut = hexToRgb(document.getElementById('in-colorOuter-text').value);
-            const cWarp = hexToRgb(document.getElementById('in-colorWarp-text').value);
-            const cAcc = hexToRgb(document.getElementById('in-colorAccent-text').value);
-            gl.uniform3f(locColorBg, cBg[0], cBg[1], cBg[2]);
-            gl.uniform3f(locColorOuter, cOut[0], cOut[1], cOut[2]);
-            gl.uniform3f(locColorWarp, cWarp[0], cWarp[1], cWarp[2]);
-            gl.uniform3f(locColorAccent, cAcc[0], cAcc[1], cAcc[2]);
-
-            const size = parseFloat(document.getElementById('meta-scale').value);
-            const soft = parseFloat(document.getElementById('meta-softness').value) / 100;
-            gl.uniform1f(locScale, size);
-            gl.uniform2f(locPosOffset, posX, posY);
+            gl.uniform2f(locRes, canvas.width, canvas.height); gl.uniform1f(locSeed, currentSeed); gl.uniform1i(locMode, currentMode);
             
-            // Logic for soft layers
-            const base = 0.65 - (size/400);
-            gl.uniform1f(locOuterStart, base); gl.uniform1f(locOuterEnd, base + 0.1 + soft);
-            gl.uniform1f(locWarpStart, base + 0.1); gl.uniform1f(locWarpEnd, base + 0.2 + soft);
-            gl.uniform1f(locAccentStart, base + 0.2); gl.uniform1f(locAccentEnd, base + 0.3 + soft);
+            const cBg = hexToRgb(document.getElementById('in-colorBg-text').value); const cOut = hexToRgb(document.getElementById('in-colorOuter-text').value);
+            const cWarp = hexToRgb(document.getElementById('in-colorWarp-text').value); const cAcc = hexToRgb(document.getElementById('in-colorAccent-text').value);
+            gl.uniform3f(locColorBg, cBg[0], cBg[1], cBg[2]); gl.uniform3f(locColorOuter, cOut[0], cOut[1], cOut[2]);
+            gl.uniform3f(locColorWarp, cWarp[0], cWarp[1], cWarp[2]); gl.uniform3f(locColorAccent, cAcc[0], cAcc[1], cAcc[2]);
 
-            gl.uniform1f(locRgbShift, parseFloat(document.getElementById('opt-rgb').value));
-            gl.uniform1f(locZoomBlur, parseFloat(document.getElementById('opt-zoom').value));
-            gl.uniform1f(locGlass, 0.0);
+            const size = parseFloat(document.getElementById('meta-scale').value) / 100.0; const soft = parseFloat(document.getElementById('meta-softness').value) / 100.0; const core = parseFloat(document.getElementById('meta-core').value) / 100.0;      
+            const baseStart = 0.65 - (size * 0.4); const layerGap = 0.05 + (soft * 0.1); 
+            const outerS = baseStart; const warpS = baseStart + layerGap; const accentS = baseStart + (layerGap * 2.0) + ((1.0 - core) * 0.15);
+            const blurAmount = 0.05 + (soft * 0.45); 
+            const outerE = outerS + blurAmount * 1.5; const warpE = warpS + blurAmount; const accentE = accentS + blurAmount * 0.5; 
 
+            gl.uniform1f(locOuterStart, outerS); gl.uniform1f(locOuterEnd, outerE); gl.uniform1f(locWarpStart, warpS); gl.uniform1f(locWarpEnd, warpE); gl.uniform1f(locAccentStart, accentS); gl.uniform1f(locAccentEnd, accentE);
+            
+            gl.uniform1f(locScale, parseFloat(document.getElementById('in-scale').value)); gl.uniform2f(locPosOffset, parseFloat(document.getElementById('in-posX').value), parseFloat(document.getElementById('in-posY').value));
+            
+            gl.uniform1f(locRgbShift, parseFloat(document.getElementById('opt-rgb').value)); gl.uniform1f(locZoomBlur, parseFloat(document.getElementById('opt-zoom').value)); gl.uniform1f(locGlass, parseFloat(document.getElementById('opt-glass').value));
+            gl.uniform1f(locExposure, parseFloat(document.getElementById('post-exposure').value)); gl.uniform1f(locContrast, parseFloat(document.getElementById('post-contrast').value)); gl.uniform1f(locSaturation, parseFloat(document.getElementById('post-saturation').value));
+            
             gl.drawArrays(gl.TRIANGLES, 0, 6);
-            updateSafeZone();
         }
 
-        // --- Navigation (Pan & Zoom) ---
-        let isDragging = false, lastX, lastY;
-        canvas.addEventListener('mousedown', e => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
-        window.addEventListener('mouseup', () => isDragging = false);
-        canvas.addEventListener('mousemove', e => {
-            if(!isDragging) return;
-            posX += (e.clientX - lastX) / canvas.clientHeight;
-            posY -= (e.clientY - lastY) / canvas.clientHeight;
-            lastX = e.clientX; lastY = e.clientY;
-            render();
-        });
-        canvas.addEventListener('wheel', e => {
-            scaleVal *= (1 + e.deltaY * 0.001);
-            document.getElementById('meta-scale').value = scaleVal;
-            document.getElementById('val-scale').innerText = Math.round(scaleVal) + '%';
-            render();
-        });
-
-        // --- Safe Zone & Stencil ---
-        const safeZone = document.getElementById('safe-zone');
-        const stencilOverlay = document.getElementById('stencil-overlay');
-        const stencilInput = document.getElementById('stencil-upload');
-
-        function updateSafeZone() {
-            if (currentRatio === 'free' && !stencilActive) { safeZone.style.display = 'none'; return; }
-            safeZone.style.display = 'block';
-            const maxW = window.innerWidth * 0.8, maxH = window.innerHeight * 0.8;
-            let ratio = stencilActive ? stencilRatio : eval(currentRatio.replace(':','/'));
-            let w, h;
-            if (maxW/maxH > ratio) { h = maxH; w = h * ratio; } else { w = maxW; h = w / ratio; }
-            safeZone.style.width = Math.floor(w) + 'px'; safeZone.style.height = Math.floor(h) + 'px';
-        }
-
-        document.querySelectorAll('.safe-btn').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.safe-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentRatio = btn.dataset.ratio;
-                stencilActive = false; stencilOverlay.style.backgroundImage = 'none';
-                render();
-            };
-        });
-
-        document.getElementById('btn-load-stencil').onclick = () => stencilInput.click();
-        stencilInput.onchange = (e) => {
-            const file = e.target.files[0]; if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const img = new Image();
-                img.onload = () => {
-                    stencilRatio = img.naturalWidth / img.naturalHeight;
-                    stencilActive = true;
-                    stencilOverlay.style.backgroundImage = `url(${ev.target.result})`;
-                    document.getElementById('stencil-info').innerText = `${img.naturalWidth}x${img.naturalHeight}`;
-                    render();
-                };
-                img.src = ev.target.result;
-            };
-            reader.readAsDataURL(file);
-        };
-
-        // --- Sliders & Buttons ---
-        document.querySelectorAll('input[type="range"]').forEach(input => {
-            input.oninput = () => {
-                const valId = input.id.replace('meta-', 'val-').replace('opt-', 'val-');
-                const display = document.getElementById(valId);
-                if(display) display.innerText = input.id.includes('meta') ? input.value + '%' : parseFloat(input.value).toFixed(2);
-                render();
-            };
-        });
-
-        document.querySelectorAll('.mode-btn').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentMode = parseInt(btn.dataset.mode);
-                render();
-            };
-        });
-
-        document.getElementById('btn-generate').onclick = () => { currentSeed = Math.random() * 100; render(); };
-
-        // --- 4K Export ---
-        document.getElementById('btn-download-4k').onclick = async () => {
-            const btn = document.getElementById('btn-download-4k');
-            btn.innerText = 'Рендеринг...';
-            const oldW = canvas.width, oldH = canvas.height;
-            const ratio = stencilActive ? stencilRatio : (currentRatio === 'free' ? oldW/oldH : eval(currentRatio.replace(':','/')));
-            
-            let exW = 3840, exH = Math.round(3840 / ratio);
-            if(ratio < 1) { exH = 3840; exW = Math.round(3840 * ratio); }
-
-            // Apply Zoom Factor for crop matching
-            if(currentRatio !== 'free') {
-                const rect = safeZone.getBoundingClientRect();
-                const zoom = oldW / rect.width;
-                gl.uniform1f(locScale, parseFloat(document.getElementById('meta-scale').value) * zoom);
-            }
-
-            canvas.width = exW; canvas.height = exH;
-            gl.viewport(0, 0, exW, exH);
-            gl.uniform2f(locRes, exW, exH);
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-            const link = document.createElement('a');
-            link.download = `sanctum-4k-${Date.now()}.png`;
-            link.href = canvas.toDataURL();
-            link.click();
-
-            canvas.width = oldW; canvas.height = oldH;
-            btn.innerText = 'Скачать 4K PNG';
-            render();
-        };
-
-        // --- Presets Logic ---
-        const builtInPresets = [
-            { name: "Radiant Rush", bg: "#0F111A", c1: "#FF0055", c2: "#00E5FF", c3: "#FFFFFF", scale: 60, soft: 70 },
-            { name: "Deep Ocean", bg: "#020B14", c1: "#0044FF", c2: "#00E5FF", c3: "#FFFFFF", scale: 45, soft: 65 },
-            { name: "Toxic Frag", bg: "#0D1A00", c1: "#33FF00", c2: "#00FFCC", c3: "#E6FF00", scale: 55, soft: 80 }
-        ];
-
-        function loadPresets() {
-            const container = document.getElementById('preset-container');
+        // --- ЛОГИКА ПРЕСЕТОВ И СОХРАНЕНИЯ ---
+        function loadPresets(modeId) {
+            const container = document.getElementById('preset-container'); 
             container.innerHTML = '';
-            builtInPresets.forEach(p => {
-                const b = document.createElement('button');
-                b.className = 'preset-btn'; b.innerText = p.name;
-                b.onclick = () => {
-                    document.getElementById('in-colorBg-text').value = p.bg;
-                    document.getElementById('in-colorOuter-text').value = p.c1;
-                    document.getElementById('in-colorWarp-text').value = p.c2;
-                    document.getElementById('in-colorAccent-text').value = p.c3;
-                    document.getElementById('meta-scale').value = p.scale;
-                    document.getElementById('meta-softness').value = p.soft;
-                    render();
-                };
-                container.appendChild(b);
+            
+            const allPresets = [...(builtInPresets[modeId] || []), ...(customPresets[modeId] || [])];
+
+            allPresets.forEach((p, index) => {
+                const btn = document.createElement('button');
+                // Если индекс больше количества встроенных пресетов, значит это кастомный
+                if (index >= (builtInPresets[modeId]?.length || 0)) {
+                    btn.className = 'preset-btn custom';
+                    btn.title = "Ваш сохраненный пресет";
+                } else {
+                    btn.className = 'preset-btn';
+                }
+                btn.innerText = p.name;
+                btn.onclick = () => applyPreset(p);
+                container.appendChild(btn);
             });
         }
 
-        function syncColors(id) {
-            const p = document.getElementById(`in-${id}-picker`), t = document.getElementById(`in-${id}-text`);
-            p.oninput = () => { t.value = p.value.toUpperCase(); render(); };
-            t.oninput = () => { if(/^#[0-9A-F]{6}$/i.test(t.value)) { p.value = t.value; render(); } };
+        function setInput(id, val, isPercentage = false) {
+            if(id.startsWith('in-color')) {
+                document.getElementById(id+'-text').value = val.toUpperCase(); 
+                document.getElementById(id+'-picker').value = val;
+            } else {
+                document.getElementById(id).value = val;
+                let displayId = id.replace('meta-', 'val-').replace('post-', 'val-').replace('opt-', 'val-');
+                let displayElem = document.getElementById(displayId);
+                if(displayElem) {
+                    displayElem.innerText = isPercentage ? val + '%' : parseFloat(val).toFixed(2);
+                }
+            }
         }
-        ['colorBg', 'colorOuter', 'colorWarp', 'colorAccent'].forEach(syncColors);
 
-        window.onresize = render;
-        loadPresets();
-        setTimeout(render, 100);
+        function applyPreset(p) {
+            setInput('in-colorBg', p.bg); setInput('in-colorOuter', p.c1); setInput('in-colorWarp', p.c2); setInput('in-colorAccent', p.c3);
+            setInput('meta-scale', p.scale, true); setInput('meta-softness', p.soft, true); setInput('meta-core', p.core, true);
+            setInput('opt-rgb', p.rgb || '0.0'); setInput('opt-zoom', p.zoom || '0.0'); setInput('opt-glass', p.glass || '0.0');
+            setInput('post-exposure', p.exp || '0.0'); setInput('post-contrast', p.cont || '1.0'); setInput('post-saturation', p.sat || '1.0');
+            render();
+        }
+
+        // Кнопка сохранения своего пресета
+        document.getElementById('btn-save-preset').addEventListener('click', () => {
+            const name = prompt("Введите название пресета (макс. 15 символов):", "My Custom Style");
+            if (!name) return;
+
+            const newPreset = {
+                name: name.substring(0, 15),
+                bg: document.getElementById('in-colorBg-picker').value, c1: document.getElementById('in-colorOuter-picker').value,
+                c2: document.getElementById('in-colorWarp-picker').value, c3: document.getElementById('in-colorAccent-picker').value,
+                scale: document.getElementById('meta-scale').value, soft: document.getElementById('meta-softness').value, core: document.getElementById('meta-core').value,
+                rgb: document.getElementById('opt-rgb').value, zoom: document.getElementById('opt-zoom').value, glass: document.getElementById('opt-glass').value,
+                exp: document.getElementById('post-exposure').value, cont: document.getElementById('post-contrast').value, sat: document.getElementById('post-saturation').value
+            };
+
+            customPresets[currentMode].push(newPreset);
+            localStorage.setItem('glowGradientCustomPresets', JSON.stringify(customPresets));
+            loadPresets(currentMode); // Обновляем панель
+        });
+
+        loadPresets(0); // Инициализация интерфейса при загрузке
+
+        // Переключение режимов
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active')); 
+                e.currentTarget.classList.add('active');
+                currentMode = parseInt(e.currentTarget.getAttribute('data-mode')); 
+                loadPresets(currentMode); 
+                render();
+            });
+        });
+
+        // Работа с ползунками
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            input.addEventListener('input', (e) => {
+                let id = e.target.id.replace('meta-', 'val-').replace('post-', 'val-').replace('opt-', 'val-');
+                const valElem = document.getElementById(id);
+                if (valElem) {
+                    valElem.innerText = e.target.id.startsWith('meta-') ? e.target.value + '%' : parseFloat(e.target.value).toFixed(2);
+                }
+                render();
+            });
+        });
+
+        // --- ЛОГИКА НАВИГАЦИИ (ПАН И ЗУМ) ---
+        let isDrg = false, lx = 0, ly = 0, lpd = null, lpcx = 0, lpcy = 0;
+        const scaleIn = document.getElementById('in-scale'), posXIn = document.getElementById('in-posX'), posYIn = document.getElementById('in-posY');
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault(); 
+            let ns = parseFloat(scaleIn.value) * (1.0 + e.deltaY * 0.001); 
+            ns = Math.max(0.01, Math.min(20.0, ns)); 
+            let r = canvas.getBoundingClientRect(), cx = e.clientX - r.left, cy = e.clientY - r.top;
+            let stX = cx / canvas.clientWidth, stY = (canvas.clientHeight - cy) / canvas.clientHeight; 
+            stX *= canvas.clientWidth / canvas.clientHeight;
+            let ox = parseFloat(posXIn.value), oy = parseFloat(posYIn.value);
+            posXIn.value = stX - (stX - ox) * (parseFloat(scaleIn.value) / ns); 
+            posYIn.value = stY - (stY - oy) * (parseFloat(scaleIn.value) / ns); 
+            scaleIn.value = ns; 
+            render();
+        }, { passive: false });
+
+        canvas.addEventListener('mousedown', (e) => { isDrg = true; lx = e.clientX; ly = e.clientY; }); 
+        window.addEventListener('mouseup', () => isDrg = false); 
+        window.addEventListener('mouseleave', () => isDrg = false);
+        
+        canvas.addEventListener('mousemove', (e) => { 
+            if (!isDrg) return; 
+            posXIn.value = parseFloat(posXIn.value) + (e.clientX - lx) / canvas.clientHeight; 
+            posYIn.value = parseFloat(posYIn.value) - (e.clientY - ly) / canvas.clientHeight; 
+            lx = e.clientX; ly = e.clientY; 
+            render(); 
+        });
+        
+        canvas.addEventListener('touchstart', (e) => { 
+            if (e.touches.length === 1) { isDrg = true; lx = e.touches[0].clientX; ly = e.touches[0].clientY; } 
+            else if (e.touches.length === 2) { isDrg = false; lpd = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); lpcx = (e.touches[0].clientX + e.touches[1].clientX) / 2; lpcy = (e.touches[0].clientY + e.touches[1].clientY) / 2; } 
+        }, { passive: false });
+        window.addEventListener('touchend', () => { isDrg = false; lpd = null; });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); const r = canvas.getBoundingClientRect();
+            if (e.touches.length === 1 && isDrg) { 
+                posXIn.value = parseFloat(posXIn.value) + (e.touches[0].clientX - lx) / canvas.clientHeight; 
+                posYIn.value = parseFloat(posYIn.value) - (e.touches[0].clientY - ly) / canvas.clientHeight; 
+                lx = e.touches[0].clientX; ly = e.touches[0].clientY; 
+                render(); 
+            } else if (e.touches.length === 2 && lpd) {
+                const cd = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), ccx = (e.touches[0].clientX + e.touches[1].clientX) / 2, ccy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                let ns = parseFloat(scaleIn.value) * (lpd / cd); ns = Math.max(0.01, Math.min(20.0, ns));
+                let stX = ((lpcx - r.left) / canvas.clientWidth) * (canvas.clientWidth / canvas.clientHeight), stY = (canvas.clientHeight - (lpcy - r.top)) / canvas.clientHeight;
+                posXIn.value = stX - (stX - parseFloat(posXIn.value)) * (parseFloat(scaleIn.value) / ns) + (ccx - lpcx) / canvas.clientHeight; 
+                posYIn.value = stY - (stY - parseFloat(posYIn.value)) * (parseFloat(scaleIn.value) / ns) - (ccy - lpcy) / canvas.clientHeight; 
+                scaleIn.value = ns; lpd = cd; lpcx = ccx; lpcy = ccy; 
+                render();
+            }
+        }, { passive: false });
+
+        function setupColorSync(id) {
+            const picker = document.getElementById(`in-${id}-picker`), text = document.getElementById(`in-${id}-text`);
+            picker.addEventListener('input', (e) => { text.value = e.target.value.toUpperCase(); render(); });
+            text.addEventListener('input', (e) => { 
+                let v = e.target.value; if (!v.startsWith('#')) v = '#' + v; 
+                if (/^#[0-9A-Fa-f]{6}$/i.test(v) || /^#[0-9A-Fa-f]{3}$/i.test(v)) { 
+                    picker.value = v.length === 4 ? '#' + v[1]+v[1] + v[2]+v[2] + v[3]+v[3] : v; render(); 
+                } 
+            });
+        }
+        setupColorSync('colorBg'); setupColorSync('colorOuter'); setupColorSync('colorWarp'); setupColorSync('colorAccent');
+
+        window.addEventListener('resize', render);
+        document.getElementById('btn-generate').addEventListener('click', () => { currentSeed = Math.random() * 1000.0; render(); });
+
+        function showSuccessState(btn, text) { 
+            const o = btn.innerHTML; 
+            btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> ${text}`; 
+            btn.style.background = '#28C4FF'; btn.style.color = '#0F111A'; 
+            setTimeout(() => { btn.innerHTML = o; btn.style.background = ''; btn.style.color = ''; }, 800); 
+        }
+
+        document.getElementById('btn-download-4k').addEventListener('click', async (e) => {
+            const btn = e.currentTarget; const o = btn.innerHTML; 
+            btn.innerHTML = '⚙️ Ожидайте...'; await new Promise(r => setTimeout(r, 10));
+            const ow = canvas.width, oh = canvas.height, rw = 3840, rh = 2160;
+            
+            canvas.width = rw; canvas.height = rh; gl.viewport(0, 0, rw, rh); 
+            gl.uniform2f(locRes, rw, rh); gl.drawArrays(gl.TRIANGLES, 0, 6);
+            
+            const p = new Uint8Array(rw * rh * 4); gl.readPixels(0, 0, rw, rh, gl.RGBA, gl.UNSIGNED_BYTE, p);
+            canvas.width = ow; canvas.height = oh; render(); 
+            
+            const fp = new Uint8Array(rw * rh * 4);
+            for (let r = 0; r < rh; r++) for (let c = 0; c < rw; c++) { 
+                const si = (r * rw + c) * 4, di = ((rh - r - 1) * rw + c) * 4; 
+                fp[di] = p[si]; fp[di+1] = p[si+1]; fp[di+2] = p[si+2]; fp[di+3] = p[si+3]; 
+            }
+            
+            const tc = document.createElement('canvas'); tc.width = rw; tc.height = rh; 
+            const ctx = tc.getContext('2d'); const idata = ctx.createImageData(rw, rh); 
+            idata.data.set(fp); ctx.putImageData(idata, 0, 0);
+            
+            tc.toBlob((b) => { 
+                if (!b) { btn.innerHTML = 'Ошибка ❌'; setTimeout(() => btn.innerHTML = o, 800); return; } 
+                const url = URL.createObjectURL(b); const link = document.createElement('a'); 
+                link.href = url; link.download = 'glow-gradient-4k.png'; document.body.appendChild(link); 
+                link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); 
+                showSuccessState(btn, 'Сохранено!'); 
+            }, 'image/png', 1.0); 
+        });
+
+        document.getElementById('btn-save-default').addEventListener('click', (e) => {
+            defaultSettings = { 
+                colorBg: document.getElementById('in-colorBg-picker').value, colorOuter: document.getElementById('in-colorOuter-picker').value, 
+                colorWarp: document.getElementById('in-colorWarp-picker').value, colorAccent: document.getElementById('in-colorAccent-picker').value, 
+                scale: document.getElementById('meta-scale').value, softness: document.getElementById('meta-softness').value, core: document.getElementById('meta-core').value, 
+                optRgb: document.getElementById('opt-rgb').value, optZoom: document.getElementById('opt-zoom').value, optGlass: document.getElementById('opt-glass').value, 
+                exposure: document.getElementById('post-exposure').value, contrast: document.getElementById('post-contrast').value, saturation: document.getElementById('post-saturation').value 
+            };
+            showSuccessState(e.currentTarget, 'Сохранено');
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', (e) => {
+            applyPreset({ 
+                bg: defaultSettings.colorBg, c1: defaultSettings.colorOuter, c2: defaultSettings.colorWarp, c3: defaultSettings.colorAccent, 
+                scale: defaultSettings.scale, soft: defaultSettings.softness, core: defaultSettings.core, 
+                rgb: defaultSettings.optRgb, zoom: defaultSettings.optZoom, glass: defaultSettings.optGlass, 
+                exp: defaultSettings.exposure, cont: defaultSettings.contrast, sat: defaultSettings.saturation 
+            });
+            showSuccessState(e.currentTarget, 'Сброшено!');
+        });
+
+        setTimeout(render, 50);
     </script>
 </body>
 </html>
