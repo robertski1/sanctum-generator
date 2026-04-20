@@ -80,11 +80,26 @@
         button.secondary { background: rgba(15, 17, 26, 0.35); backdrop-filter: blur(110px); -webkit-backdrop-filter: blur(110px); color: #fff; font-weight: 400; font-size: 14px; border: 1px solid rgba(255,255,255,0.05); }
         button.secondary:hover { background: rgba(40, 196, 255, 0.15); color: #28C4FF; border-color: rgba(40, 196, 255, 0.3); }
         .btn-small { height: 32px; font-size: 12px; }
+
+        /* --- Стили для Safe Zone и кнопок форматов --- */
+        .safe-btn { flex: 1; height: 32px; font-size: 11px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #888; cursor: pointer; border-radius: 2px; transition: 0.2s; }
+        .safe-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .safe-btn.active { border-color: #28C4FF; color: #28C4FF; background: rgba(40, 196, 255, 0.1); }
+
+        #safe-zone {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.85); border: 1px solid rgba(255, 255, 255, 0.3);
+            pointer-events: none; z-index: 5; display: none; overflow: hidden; border-radius: 2px;
+        }
+        #stencil-overlay { width: 100%; height: 100%; background-size: 100% 100%; background-repeat: no-repeat; }
+
+
     </style>
 </head>
 <body>
 
     <canvas id="glcanvas"></canvas>
+    <div id="safe-zone"><div id="stencil-overlay"></div></div>
 
     <div class="ui-panel left-panel">
         <div class="panel-section">
@@ -97,6 +112,22 @@
             </div>
         </div>
 
+        <div class="panel-section">
+            <h3 class="panel-title">Safe Zone & Трафарет</h3>
+            <div class="action-buttons">
+                <button class="safe-btn active" data-ratio="free">Full</button>
+                <button class="safe-btn" data-ratio="16:9">16:9</button>
+                <button class="safe-btn" data-ratio="9:16">9:16</button>
+                <button class="safe-btn" data-ratio="1:1">1:1</button>
+            </div>
+            <button id="btn-load-stencil" class="secondary" style="width: 100%; font-size: 11px; height: 32px; border-style: dashed; margin-top: 4px;">
+                📁 Загрузить PNG мокап
+            </button>
+            <input type="file" id="stencil-upload" accept="image/png" style="display: none;">
+            <div id="stencil-info" style="font-size: 10px; color: #28C4FF; text-align: center; margin-top: -4px;"></div>
+        </div>
+
+        
         <div class="panel-section" style="margin-top: 8px;">
             <h3 class="panel-title">Оптика и Размытие</h3>
             <div class="meta-controls clean">
