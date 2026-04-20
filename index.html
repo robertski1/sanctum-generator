@@ -679,14 +679,19 @@
             setTimeout(() => { btn.innerHTML = o; btn.style.background = ''; btn.style.color = ''; }, 800); 
         }
 
+        // --- 4K Export (С умным кадрированием) ---
         document.getElementById('btn-download-4k').addEventListener('click', async (e) => {
             const btn = e.currentTarget; const o = btn.innerHTML; 
             btn.innerHTML = '⚙️ Ожидайте...'; await new Promise(r => setTimeout(r, 10));
             
             const ow = canvas.width, oh = canvas.height;
-            const originalScale = parseFloat(document.getElementById('meta-scale').value) / 100.0;
             
-            // 1. Считаем разрешение с учетом рамки (максимум 3840 по длинной стороне)
+            // 1. Берем координаты и масштаб из твоих скрытых инпутов
+            const originalScale = parseFloat(document.getElementById('in-scale').value);
+            const originalPosX = parseFloat(document.getElementById('in-posX').value);
+            const originalPosY = parseFloat(document.getElementById('in-posY').value);
+            
+            // 2. Считаем разрешение с учетом рамки
             let rw = 3840, rh = 2160;
             let exportRatio = stencilActive ? stencilRatio : (currentRatio === 'free' ? ow/oh : eval(currentRatio.replace(':','/')));
             
@@ -696,14 +701,28 @@
                 rh = 3840; rw = Math.round(3840 * exportRatio); 
             }
 
-            // 2. Корректируем масштаб (Zoom), чтобы вырезать область внутри рамки
+            // 3. Умное кадрирование: корректируем зум и смещение камеры
             if (currentRatio !== 'free' || stencilActive) {
                 const rect = safeZone.getBoundingClientRect();
-                const zoom = ow / rect.width;
+                const zoom = rect.height / oh; // Вычисляем зум относительно высоты экрана
+                
                 gl.uniform1f(locScale, originalScale * zoom);
+
+                // Сдвигаем координаты шейдера под новую обрезку
+                const exportAspect = rw / rh;
+                const screenAspect = ow / oh;
+                
+                const exOffX = (exportAspect / 2) - ((screenAspect / 2) - originalPosX) / zoom;
+                const exOffY = 0.5 - (0.5 - originalPosY) / zoom;
+                
+                gl.uniform2f(locPosOffset, exOffX, exOffY);
+            } else {
+                // Если мы качаем весь экран (Full)
+                gl.uniform1f(locScale, originalScale);
+                gl.uniform2f(locPosOffset, originalPosX, originalPosY);
             }
 
-            // 3. Рендеринг 4K
+            // 4. Рендеринг 4K
             canvas.width = rw; canvas.height = rh; gl.viewport(0, 0, rw, rh); 
             gl.uniform2f(locRes, rw, rh); gl.drawArrays(gl.TRIANGLES, 0, 6);
             
@@ -712,7 +731,7 @@
             // Возвращаем масштаб и размеры обратно для превью
             canvas.width = ow; canvas.height = oh; render(); 
             
-            // 4. Переворот WebGL и сохранение файла
+            // 5. Переворот WebGL и сохранение файла
             const fp = new Uint8Array(rw * rh * 4);
             for (let r = 0; r < rh; r++) for (let c = 0; c < rw; c++) { 
                 const si = (r * rw + c) * 4, di = ((rh - r - 1) * rw + c) * 4; 
