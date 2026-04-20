@@ -616,78 +616,71 @@
             setTimeout(() => { btn.innerHTML = o; btn.style.background = ''; btn.style.color = ''; }, 800); 
         }
 
-        document.getElementById('btn-download-4k').addEventListener('click', async (e) => {
-    const btn = e.currentTarget; const o = btn.innerHTML; 
-    btn.innerHTML = '⚙️ Рендеринг...'; 
-    await new Promise(r => setTimeout(r, 50)); // Даем UI обновиться
+            document.getElementById('btn-download-4k').addEventListener('click', async (e) => {
+            const btn = e.currentTarget; const o = btn.innerHTML; 
+            btn.innerHTML = '⚙️ Рендеринг...'; 
+            await new Promise(r => setTimeout(r, 50)); // Пауза для обновления кнопки
 
-    const originalWidth = canvas.width, originalHeight = canvas.height;
-    const originalScale = parseFloat(scaleIn.value);
-    const originalPosX = parseFloat(posXIn.value);
-    const originalPosY = parseFloat(posYIn.value);
+            const originalWidth = canvas.width;
+            const originalHeight = canvas.height;
+            const originalScale = parseFloat(document.getElementById('in-scale').value);
 
-    // 1. Определяем пропорции и целевое разрешение
-    let renderW = 3840, renderH = 2160;
-    if (currentRatio === '9:16') { renderW = 2160; renderH = 3840; }
-    else if (currentRatio === '1:1') { renderW = 3840; renderH = 3840; }
-    else if (currentRatio === 'free') {
-        const aspect = originalWidth / originalHeight;
-        if (aspect > 1) { renderW = 3840; renderH = Math.floor(3840 / aspect); }
-        else { renderH = 3840; renderW = Math.floor(3840 * aspect); }
-    }
+            // 1. Определяем разрешение для экспорта
+            let renderW = 3840, renderH = 2160;
+            if (currentRatio === '9:16') { renderW = 2160; renderH = 3840; }
+            else if (currentRatio === '16:9') { renderW = 3840; renderH = 2160; }
+            else if (currentRatio === '1:1') { renderW = 3840; renderH = 3840; }
+            else { 
+                const aspect = originalWidth / originalHeight;
+                if (aspect > 1) { renderW = 3840; renderH = Math.floor(3840 / aspect); } 
+                else { renderH = 3840; renderW = Math.floor(3840 * aspect); }
+            }
 
-    // 2. ВАЖНО: Рассчитываем коррекцию масштаба для Safe Zone
-    let exportScale = originalScale;
-    let exportPosX = originalPosX;
-    let exportPosY = originalPosY;
+            // 2. Корректируем масштаб, если включена Safe Zone
+            if (currentRatio !== 'free') {
+                const rect = safeZoneEl.getBoundingClientRect();
+                // Рассчитываем, во сколько раз рамка меньше ширины экрана, и умножаем на этот коэффициент
+                const zoomFactor = originalWidth / rect.width;
+                gl.uniform1f(locScale, originalScale * zoomFactor);
+            }
 
-    if (currentRatio !== 'free') {
-        const rect = safeZoneEl.getBoundingClientRect();
-        const canvasRect = canvas.getBoundingClientRect();
-        
-        // Находим долю, которую занимает Safe Zone от всего экрана
-        const ratioW = rect.width / canvasRect.width;
-        const ratioH = rect.height / canvasRect.height;
-        
-        // Корректируем масштаб: мы как бы "входим" внутрь рамки
-        exportScale = originalScale * Math.max(ratioW, ratioH);
-        
-        // Корректируем смещение, чтобы центр рамки стал центром новой картинки
-        // (Математика приведения координат экрана к координатам шейдера)
-        const centerX = (rect.left + rect.width / 2) / canvasRect.width;
-        const centerY = 1.0 - (rect.top + rect.height / 2) / canvasRect.height;
-        
-        const aspectCorrection = canvasRect.width / canvasRect.height;
-        exportPosX = (centerX * aspectCorrection) - (originalPosX - (centerX * aspectCorrection)) * (exportScale / originalScale - 1.0);
-        // Упрощенный подход: просто сдвигаем "камеру" шейдера
-        exportPosX = originalPosX * (1/ratioW);
-        exportPosY = originalPosY * (1/ratioH);
-        
-        // Для точного соответствия визуалу при Safe Zone:
-        // Передаем параметры так, чтобы шейдер отрисовал только внутреннюю часть
-        gl.uniform1f(locs.locScale, originalScale * (originalWidth / rect.width));
-        // Смещение считаем от центра рамки
-    }
-
-    // 3. Подготовка холста к рендеру
-    canvas.width = renderW; canvas.height = renderH;
-    gl.viewport(0, 0, renderW, renderH);
-    gl.uniform2f(locs.locRes, renderW, renderH);
-    
-    // Отрисовка
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-    // 4. Чтение пикселей и сохранение
-    const p = new Uint8Array(renderW * renderH * 4);
-    gl.readPixels(0, 0, renderW, renderH, gl.RGBA, gl.UNSIGNED_BYTE, p);
-    
-    // Возвращаем все как было для превью
-    canvas.width = originalWidth; canvas.height = originalHeight;
-    render(); 
-
-    // Сохранение файла... (далее ваш старый код с Blob и flippedPixels)
-    // ...
-});
+            // 3. Рендерим 4K
+            canvas.width = renderW; canvas.height = renderH; 
+            gl.viewport(0, 0, renderW, renderH); 
+            gl.uniform2f(locRes, renderW, renderH); 
+            
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            
+            // 4. Сохраняем пиксели
+            const p = new Uint8Array(renderW * renderH * 4); 
+            gl.readPixels(0, 0, renderW, renderH, gl.RGBA, gl.UNSIGNED_BYTE, p);
+            
+            // Возвращаем канвас в исходное состояние для превью
+            canvas.width = originalWidth; canvas.height = originalHeight; 
+            render(); 
+            
+            // 5. Переворачиваем картинку (WebGL рендерит вверх ногами)
+            const fp = new Uint8Array(renderW * renderH * 4);
+            for (let r = 0; r < renderH; r++) {
+                for (let c = 0; c < renderW; c++) { 
+                    const si = (r * renderW + c) * 4, di = ((renderH - r - 1) * renderW + c) * 4; 
+                    fp[di] = p[si]; fp[di+1] = p[si+1]; fp[di+2] = p[si+2]; fp[di+3] = p[si+3]; 
+                }
+            }
+            
+            // 6. Создаем файл и скачиваем
+            const tc = document.createElement('canvas'); tc.width = renderW; tc.height = renderH; 
+            const ctx = tc.getContext('2d'); const idata = ctx.createImageData(renderW, renderH); 
+            idata.data.set(fp); ctx.putImageData(idata, 0, 0);
+            
+            tc.toBlob((b) => { 
+                if (!b) { btn.innerHTML = 'Ошибка ❌'; setTimeout(() => btn.innerHTML = o, 800); return; } 
+                const url = URL.createObjectURL(b); const link = document.createElement('a'); 
+                link.href = url; link.download = 'glow-gradient-4k.png'; document.body.appendChild(link); 
+                link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); 
+                showSuccessState(btn, 'Сохранено!'); 
+            }, 'image/png', 1.0); 
+        });
 
         document.getElementById('btn-save-default').addEventListener('click', (e) => {
             defaultSettings = { 
