@@ -748,7 +748,7 @@ window.addEventListener('resize', updateLayoutWithStencil);
                 link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); 
                 showSuccessState(btn, 'Сохранено!'); 
             }, 'image/png', 1.0); 
-        });
+    
 
         document.getElementById('btn-save-default').addEventListener('click', (e) => {
             defaultSettings = { 
@@ -774,7 +774,6 @@ window.addEventListener('resize', updateLayoutWithStencil);
         setTimeout(render, 50);
 
 const safeZoneEl = document.getElementById('safe-zone');
-const stencilOverlay = document.getElementById('stencil-overlay');
 const mockupSelect = document.getElementById('mockup-select');
 const customUpload = document.getElementById('custom-mockup-upload');
 
