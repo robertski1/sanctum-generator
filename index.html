@@ -83,27 +83,22 @@
 
         /* --- Стили Safe Zone и Трафаретов --- */
         #safe-zone {
-        position: absolute;
-        top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-        /* Тень создает эффект паспарту (затемнение фона) */
-        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75); 
-        border: 1px solid rgba(40, 196, 255, 0.5); /* Видимая граница */
-        pointer-events: none; /* Мышь проходит сквозь рамку к шейдеру */
-        z-index: 5;
-        display: none; 
-        overflow: hidden;
-        background-color: transparent;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    pointer-events: none;
+    z-index: 5;
+    display: none;
+    overflow: hidden;
 }
 
 #stencil-overlay {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-size: contain; /* Картинка всегда вписывается в рамку */
-    background-position: center;
+    width: 100%;
+    height: 100%;
+    background-size: 100% 100%; /* Картинка тянется ровно по размеру зоны */
     background-repeat: no-repeat;
-    z-index: 6;
 }
 
     </style>
@@ -129,23 +124,17 @@
         </div>
 
 <div class="panel-section">
-    <h3 class="panel-title">Safe Zone & Трафарет</h3>
-    <div class="action-buttons" style="margin-bottom: 8px;">
-        <button class="safe-btn active" data-ratio="free">Full</button>
-        <button class="safe-btn" data-ratio="16:9">16:9</button>
-        <button class="safe-btn" data-ratio="9:16">9:16</button>
-        <button class="safe-btn" data-ratio="1:1">1:1</button>
+    <h3 class="panel-title">Трафарет (PNG Mockup)</h3>
+    <div class="action-buttons">
+        <button id="btn-load-stencil" class="safe-btn" style="width: 100%; border: 1px dashed rgba(255,255,255,0.3);">
+            📁 Загрузить мокап
+        </button>
+        <button id="btn-clear-stencil" class="safe-btn" style="display: none; background: rgba(255, 69, 58, 0.2); color: #ff453a;">
+            ✕ Убрать
+        </button>
     </div>
-    
-    <div class="color-input-wrapper" style="padding: 0;">
-        <select id="mockup-select" style="width: 100%; background: transparent; color: #fff; border: none; padding: 8px; font-size: 13px; cursor: pointer; outline: none;">
-            <option value="none">❌ Без трафарета</option>
-            <option value="phone">📱 Смартфон (SVG)</option>
-            <option value="browser">🌐 Браузер (SVG)</option>
-            <option value="custom">📁 Загрузить свой PNG...</option>
-        </select>
-        <input type="file" id="custom-mockup-upload" accept="image/png" style="display: none;">
-    </div>
+    <input type="file" id="stencil-upload" accept="image/png" style="display: none;">
+    <div id="stencil-info" style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 5px; text-align: center;"></div>
 </div>
 
 
@@ -616,32 +605,33 @@
         }
 
             document.getElementById('btn-download-4k').addEventListener('click', async (e) => {
-            const btn = e.currentTarget; const o = btn.innerHTML; 
-            btn.innerHTML = '⚙️ Рендеринг...'; 
-            await new Promise(r => setTimeout(r, 50)); // Пауза для обновления кнопки
+    // ... (начало функции как раньше)
 
-            const originalWidth = canvas.width;
-            const originalHeight = canvas.height;
-            const originalScale = parseFloat(document.getElementById('in-scale').value);
+    let renderW, renderH;
 
-            // 1. Определяем разрешение для экспорта
-            let renderW = 3840, renderH = 2160;
-            if (currentRatio === '9:16') { renderW = 2160; renderH = 3840; }
-            else if (currentRatio === '16:9') { renderW = 3840; renderH = 2160; }
-            else if (currentRatio === '1:1') { renderW = 3840; renderH = 3840; }
-            else { 
-                const aspect = originalWidth / originalHeight;
-                if (aspect > 1) { renderW = 3840; renderH = Math.floor(3840 / aspect); } 
-                else { renderH = 3840; renderW = Math.floor(3840 * aspect); }
-            }
+    if (stencilData.active) {
+        // Если загружен мокап, фиксируем одну из сторон под 4K, вторую считаем по пропорции мокапа
+        if (stencilData.ratio > 1) { // Горизонтальный или квадрат
+            renderW = 3840;
+            renderH = Math.floor(3840 / stencilData.ratio);
+        } else { // Вертикальный
+            renderH = 3840;
+            renderW = Math.floor(3840 * stencilData.ratio);
+        }
 
-            // 2. Корректируем масштаб, если включена Safe Zone
-            if (currentRatio !== 'free') {
-                const rect = safeZoneEl.getBoundingClientRect();
-                // Рассчитываем, во сколько раз рамка меньше ширины экрана, и умножаем на этот коэффициент
-                const zoomFactor = originalWidth / rect.width;
-                gl.uniform1f(locScale, originalScale * zoomFactor);
-            }
+        // Корректируем зум шейдера под размер рамки на экране
+        const rect = safeZone.getBoundingClientRect();
+        const zoomFactor = canvas.width / rect.width;
+        gl.uniform1f(locScale, parseFloat(document.getElementById('in-scale').value) * zoomFactor);
+    } else {
+        // Обычный экспорт на весь экран (как раньше)
+        const aspect = canvas.width / canvas.height;
+        renderW = aspect > 1 ? 3840 : Math.floor(3840 * aspect);
+        renderH = aspect > 1 ? Math.floor(3840 / aspect) : 3840;
+    }
+
+    // ... (далее рендер и сохранение пикселей как в прошлом исправленном коде)
+});
 
             // 3. Рендерим 4K
             canvas.width = renderW; canvas.height = renderH; 
@@ -667,6 +657,85 @@
                 }
             }
             
+const stencilInput = document.getElementById('stencil-upload');
+const btnLoad = document.getElementById('btn-load-stencil');
+const btnClear = document.getElementById('btn-clear-stencil');
+const stencilInfo = document.getElementById('stencil-info');
+const safeZone = document.getElementById('safe-zone');
+const stencilOverlay = document.getElementById('stencil-overlay');
+
+let stencilData = {
+    ratio: 1,
+    width: 0,
+    height: 0,
+    active: false
+};
+
+// Клик по кнопке вызывает выбор файла
+btnLoad.addEventListener('click', () => stencilInput.click());
+
+// Очистка
+btnClear.addEventListener('click', () => {
+    stencilData.active = false;
+    safeZone.style.display = 'none';
+    btnClear.style.display = 'none';
+    stencilInfo.innerText = '';
+    btnLoad.innerText = '📁 Загрузить мокап';
+});
+
+stencilInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+            // 1. Сохраняем реальные размеры PNG
+            stencilData.width = img.naturalWidth;
+            stencilData.height = img.naturalHeight;
+            stencilData.ratio = img.naturalWidth / img.naturalHeight;
+            stencilData.active = true;
+
+            // 2. Визуализируем
+            stencilOverlay.style.backgroundImage = `url(${event.target.result})`;
+            btnLoad.innerText = '🔄 Сменить';
+            btnClear.style.display = 'block';
+            stencilInfo.innerText = `Размер: ${stencilData.width}x${stencilData.height} (1:${stencilData.ratio.toFixed(2)})`;
+
+            updateLayoutWithStencil();
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+function updateLayoutWithStencil() {
+    if (!stencilData.active) return;
+
+    safeZone.style.display = 'block';
+    
+    const padding = 100; // Отступ от краев экрана
+    const maxW = window.innerWidth - padding;
+    const maxH = window.innerHeight - padding;
+
+    let targetW, targetH;
+
+    // Рассчитываем размеры рамки, сохраняя пропорции PNG
+    if (maxW / maxH > stencilData.ratio) {
+        targetH = maxH;
+        targetW = maxH * stencilData.ratio;
+    } else {
+        targetW = maxW;
+        targetH = maxW / stencilData.ratio;
+    }
+
+    safeZone.style.width = Math.floor(targetW) + 'px';
+    safeZone.style.height = Math.floor(targetH) + 'px';
+}
+
+window.addEventListener('resize', updateLayoutWithStencil);
+
             // 6. Создаем файл и скачиваем
             const tc = document.createElement('canvas'); tc.width = renderW; tc.height = renderH; 
             const ctx = tc.getContext('2d'); const idata = ctx.createImageData(renderW, renderH); 
