@@ -287,7 +287,7 @@
             font-family: inherit;
         }
 
-
+        
 
         input[type="text"].hex-input {
             width: 60px;
@@ -452,44 +452,36 @@
 
         /* --- Кастомные 3 инпута внутри окна Pickr --- */
         /* Скрываем стандартную длинную строку ввода */
-        .pcr-app .pcr-interaction .pcr-result {
-            display: none !important;
-        }
-
+        .pcr-app .pcr-interaction .pcr-result { display: none !important; }
+        
         /* Контейнер для наших 3 ячеек */
-        .custom-pickr-inputs {
-            display: flex;
-            gap: 4px;
-            width: 100%;
-            margin-bottom: 8px;
-            /* Отступ от кнопки ОК */
+        .custom-pickr-inputs { 
+            display: flex; gap: 4px; width: 100%; 
+            margin-bottom: 8px; /* Отступ от кнопки ОК */
         }
-
         /* Сами ячейки */
-        .custom-pcr-inp {
-            flex: 1;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border-radius: 2px;
-            font-family: monospace;
-            font-size: 11px;
-            text-align: center;
-            height: 26px;
-            outline: none;
+        .custom-pcr-inp { 
+            flex: 1; 
+            background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); 
+            color: #fff; border-radius: 2px; font-family: monospace; 
+            font-size: 11px; text-align: center; height: 26px; outline: none;
         }
-
-        .custom-pcr-inp:focus {
-            border-color: #28C4FF;
-        }
+        .custom-pcr-inp:focus { border-color: #28C4FF; }
 
         /* Убираем стрелочки из числовых полей внутри палитры */
         .custom-pcr-inp[type="number"]::-webkit-inner-spin-button,
         .custom-pcr-inp[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+            -webkit-appearance: none; margin: 0;
         }
+        .custom-pcr-inp[type="number"] { -moz-appearance: textfield; }
 
+        /* Убираем искусственную задержку (анимацию) с миниатюры Pickr */
+        .pickr .pcr-button,
+        .pickr .pcr-button::after,
+        .pickr .pcr-button::before {
+            transition: none !important;
+        }
+        
     </style>
 </head>
 
@@ -575,18 +567,6 @@
                 </div>
             </div>
         </div>
-
-        <div class="control-group">
-            <label>Режим рисования</label>
-            <button id="btn-draw-mode" class="secondary" style="width: 100%;">
-                <span id="draw-status-icon">⚪</span> Включить кисть
-            </button>
-            <button id="btn-clear-draw" class="secondary"
-                style="width: 100%; margin-top: 5px; font-size: 10px; opacity: 0.6;">
-                Очистить рисунок
-            </button>
-        </div>
-
         <div class="color-block">
             <div class="control-group">
                 <label>Первый слой</label>
@@ -714,7 +694,7 @@
         const canvas = document.getElementById('glcanvas');
         const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
 
-
+        let currentMode = 0;
 
         // --- БАЗА ВСТРОЕННЫХ ПРЕСЕТОВ ---
         const builtInPresets = {
@@ -822,7 +802,7 @@
                 return color;
             }
 
-void main() {
+            void main() {
                 vec2 st = gl_FragCoord.xy / u_resolution.xy; st.x *= u_resolution.x / u_resolution.y;
                 vec2 center = vec2(0.5 * (u_resolution.x / u_resolution.y), 0.5); vec2 dir = st - center;
 
@@ -838,31 +818,11 @@ void main() {
 
                 color *= exp2(u_exposure); color = (color - 0.5) * u_contrast + 0.5;
                 float luminance = dot(color, vec3(0.2126, 0.7152, 0.0722)); color = mix(vec3(luminance), color, u_saturation);
-
-              
                 gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
             }
         `;
 
-        function createShader(gl, type, source) {
-            const shader = gl.createShader(type);
-            gl.shaderSource(shader, source);
-            gl.compileShader(shader);
-
-            // Если шейдер не скомпилировался...
-            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                // Определяем, какой именно шейдер сломался (для удобства)
-                const typeName = type === gl.FRAGMENT_SHADER ? "ФРАГМЕНТНОМ" : "ВЕРТЕКСНОМ";
-
-                // Выводим подробный лог видеокарты
-                console.error(`ОШИБКА В ${typeName} ШЕЙДЕРЕ:\n`, gl.getShaderInfoLog(shader));
-
-                gl.deleteShader(shader); // Очищаем мусор
-                return null;
-            }
-
-            return shader;
-        }
+        function createShader(gl, type, source) { const shader = gl.createShader(type); gl.shaderSource(shader, source); gl.compileShader(shader); if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return null; return shader; }
 
         const program = gl.createProgram(); gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vsSource)); gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fsSource)); gl.linkProgram(program); gl.useProgram(program);
         const positionBuffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0]), gl.STATIC_DRAW);
@@ -885,13 +845,6 @@ void main() {
         function hexToRgb(hex) { hex = hex.replace(/^#/, ''); if (hex.length === 3) hex = hex.split('').map(c => c + c).join(''); return [parseInt(hex.slice(0, 2), 16) / 255 || 0, parseInt(hex.slice(2, 4), 16) / 255 || 0, parseInt(hex.slice(4, 6), 16) / 255 || 0]; }
 
         function render() {
-
-            
-            const maskLoc = gl.getUniformLocation(program, "u_mask");
-            gl.activeTexture(gl.TEXTURE1); // Используем второй слот текстур
-            gl.bindTexture(gl.TEXTURE_2D, maskTexture);
-            gl.uniform1i(maskLoc, 1); // Говорим шейдеру, что маска в слоте №1
-
             const dpr = window.devicePixelRatio || 1;
             canvas.width = Math.floor(canvas.clientWidth * dpr); canvas.height = Math.floor(canvas.clientHeight * dpr);
             gl.viewport(0, 0, canvas.width, canvas.height);
@@ -1092,48 +1045,7 @@ void main() {
         window.addEventListener('resize', updateSafeZone);
         // ---------------------------------------------
 
-
-       
-        // === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ МЫШИ ===
-        let isPanning = false;
-        let startX = 0, startY = 0;
-
-        // === ОБРАБОТКА НАЖАТИЯ ===
-        canvas.addEventListener('mousedown', (e) => {
-            isPanning = true;
-            startX = e.clientX;
-            startY = e.clientY;
-        });
-
-        // === ОБРАБОТКА ДВИЖЕНИЯ ===
-        canvas.addEventListener('mousemove', (e) => {
-            if (!isPanning) return; // Если кнопку не зажали — игнорируем
-
-            // Считаем, на сколько пикселей сдвинулась мышь
-            let dx = e.clientX - startX;
-            let dy = e.clientY - startY;
-            
-            // Находим инпуты, из которых рендер берет координаты
-            let inputX = document.getElementById('in-posX');
-            let inputY = document.getElementById('in-posY');
-            
-            // Обновляем координаты (коэффициент 0.01 отвечает за скорость)
-            inputX.value = (parseFloat(inputX.value) || 0) + (dx * 0.01);
-            inputY.value = (parseFloat(inputY.value) || 0) - (dy * 0.01);
-
-            // Запоминаем текущую позицию для следующего кадра
-            startX = e.clientX;
-            startY = e.clientY;
-            
-            // Запускаем перерисовку с новыми координатами
-            render(); 
-        });
-
-        // === ОТПУСКАНИЕ КНОПКИ ===
-        window.addEventListener('mouseup', () => {
-            isPanning = false;
-        });
-
+        // --- ЛОГИКА НАВИГАЦИИ (ПАН И ЗУМ) ---
         let isDrg = false, lx = 0, ly = 0, lpd = null, lpcx = 0, lpcy = 0;
         const scaleIn = document.getElementById('in-scale'), posXIn = document.getElementById('in-posX'), posYIn = document.getElementById('in-posY');
 
@@ -1189,13 +1101,13 @@ void main() {
 
         // --- ИНИЦИАЛИЗАЦИЯ PICKR (Финальная версия с переименованием кнопок) ---
         const pickers = {};
-
+        
         function initPickr(elId, defaultColor, textId, storeKey) {
             const pickr = Pickr.create({
                 el: elId,
                 theme: 'classic',
                 default: defaultColor,
-                swatches: [],
+                swatches: [], 
                 components: {
                     preview: true, opacity: false, hue: true,
                     interaction: { hex: true, rgba: true, hsla: true, input: true, save: true }
@@ -1209,15 +1121,11 @@ void main() {
                 const root = instance.getRoot().interaction;
                 const appRoot = instance.getRoot().app;
                 
-                // 1. ПЕРЕИМЕНОВЫВАЕМ СТАНДАРТНЫЕ КНОПКИ PICKR
-                const btnHex = appRoot.querySelector('input.pcr-type[value="HEXA"]');
-                if(btnHex) btnHex.value = 'HEX';
-                const btnRgb = appRoot.querySelector('input.pcr-type[value="RGBA"]');
-                if(btnRgb) btnRgb.value = 'RGB';
-                const btnHsl = appRoot.querySelector('input.pcr-type[value="HSLA"]');
-                if(btnHsl) btnHsl.value = 'HSL';
+                // Переименовываем кнопки
+                const btnHex = appRoot.querySelector('input.pcr-type[value="HEXA"]'); if(btnHex) btnHex.value = 'HEX';
+                const btnRgb = appRoot.querySelector('input.pcr-type[value="RGBA"]'); if(btnRgb) btnRgb.value = 'RGB';
+                const btnHsl = appRoot.querySelector('input.pcr-type[value="HSLA"]'); if(btnHsl) btnHsl.value = 'HSL';
 
-                // Создаем наш контейнер с инпутами
                 const customWrapper = document.createElement('div');
                 customWrapper.className = 'custom-pickr-inputs';
                 customWrapper.innerHTML = `
@@ -1226,12 +1134,11 @@ void main() {
                     <input type="number" class="custom-pcr-inp i3">
                 `;
                 root.result.parentNode.insertBefore(customWrapper, root.result);
-
+                
                 const i1 = customWrapper.querySelector('.i1');
                 const i2 = customWrapper.querySelector('.i2');
                 const i3 = customWrapper.querySelector('.i3');
 
-                // Глушим события для защиты от закрытия
                 ['keydown', 'keyup', 'keypress', 'mousedown', 'mouseup', 'click', 'pointerdown'].forEach(evt => {
                     customWrapper.addEventListener(evt, e => e.stopPropagation());
                 });
@@ -1240,23 +1147,22 @@ void main() {
                     const rep = instance.getColorRepresentation();
                     const color = instance.getColor();
                     
-                    // ДОБАВЛЕНЫ ПРОВЕРКИ НОВЫХ НАЗВАНИЙ (HEX, RGB, HSL)
                     if (rep === 'HEXA' || rep === 'HEX') {
                         i1.type = 'text'; i1.maxLength = 7;
                         if (document.activeElement !== i1) i1.value = color.toHEXA().toString().toUpperCase();
                         i1.style.display = 'block'; i2.style.display = 'none'; i3.style.display = 'none';
                     } else if (rep === 'RGBA' || rep === 'RGB') {
-                        i1.type = 'number';
+                        i1.type = 'number'; 
                         const rgba = color.toRGBA();
-                        if (document.activeElement !== i1) i1.value = Math.round(rgba[0]);
-                        if (document.activeElement !== i2) i2.value = Math.round(rgba[1]);
+                        if (document.activeElement !== i1) i1.value = Math.round(rgba[0]); 
+                        if (document.activeElement !== i2) i2.value = Math.round(rgba[1]); 
                         if (document.activeElement !== i3) i3.value = Math.round(rgba[2]);
                         i1.style.display = 'block'; i2.style.display = 'block'; i3.style.display = 'block';
                     } else if (rep === 'HSLA' || rep === 'HSL') {
-                        i1.type = 'number';
+                        i1.type = 'number'; 
                         const hsla = color.toHSLA();
-                        if (document.activeElement !== i1) i1.value = Math.round(hsla[0]);
-                        if (document.activeElement !== i2) i2.value = Math.round(hsla[1]);
+                        if (document.activeElement !== i1) i1.value = Math.round(hsla[0]); 
+                        if (document.activeElement !== i2) i2.value = Math.round(hsla[1]); 
                         if (document.activeElement !== i3) i3.value = Math.round(hsla[2]);
                         i1.style.display = 'block'; i2.style.display = 'block'; i3.style.display = 'block';
                     }
@@ -1266,40 +1172,31 @@ void main() {
                     const rep = instance.getColorRepresentation();
                     let applied = false;
 
-                    // Обрезка до 3 символов
                     if (e && e.target && e.target.type === 'number') {
-                        if (e.target.value.length > 3) {
-                            e.target.value = e.target.value.slice(0, 3);
-                        }
+                        if (e.target.value.length > 3) e.target.value = e.target.value.slice(0, 3);
                     }
 
                     if (rep === 'HEXA' || rep === 'HEX') {
                         let val = i1.value.trim();
                         if (val && !val.startsWith('#')) val = '#' + val;
                         if (/^#[0-9A-Fa-f]{3}$/i.test(val) || /^#[0-9A-Fa-f]{6}$/i.test(val)) {
-                            applied = instance.setColor(val, true);
+                            applied = instance.setColor(val, true); 
                         }
                     } else if (rep === 'RGBA' || rep === 'RGB') {
                         if (parseInt(i1.value) > 255) i1.value = 255;
                         if (parseInt(i2.value) > 255) i2.value = 255;
                         if (parseInt(i3.value) > 255) i3.value = 255;
-
-                        const r = parseInt(i1.value) || 0;
-                        const g = parseInt(i2.value) || 0;
-                        const b = parseInt(i3.value) || 0;
-                        applied = instance.setColor(`rgba(${r}, ${g}, ${b}, 1)`, true);
+                        applied = instance.setColor(`rgba(${parseInt(i1.value)||0}, ${parseInt(i2.value)||0}, ${parseInt(i3.value)||0}, 1)`, true);
                     } else if (rep === 'HSLA' || rep === 'HSL') {
                         if (parseInt(i1.value) > 360) i1.value = 360;
                         if (parseInt(i2.value) > 100) i2.value = 100;
                         if (parseInt(i3.value) > 100) i3.value = 100;
-
-                        const h = parseInt(i1.value) || 0;
-                        const s = parseInt(i2.value) || 0;
-                        const l = parseInt(i3.value) || 0;
-                        applied = instance.setColor(`hsla(${h}, ${s}%, ${l}%, 1)`, true);
+                        applied = instance.setColor(`hsla(${parseInt(i1.value)||0}, ${parseInt(i2.value)||0}%, ${parseInt(i3.value)||0}%, 1)`, true);
                     }
 
                     if (applied) {
+                        // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ:
+                        instance.applyColor(true); // Принудительно обновляем цвет кнопки на панели
                         textInput.value = instance.getColor().toHEXA().toString().toUpperCase();
                         render();
                     }
@@ -1310,18 +1207,21 @@ void main() {
                 i3.addEventListener('input', applyFromCustom);
 
                 instance.on('change', updateCustomInputs);
-
+                
                 instance.getRoot().app.addEventListener('click', (e) => {
-                    // Строгая проверка, чтобы реагировало только на кнопки форматов
                     if(e.target.tagName.toLowerCase() === 'button' && e.target.classList.contains('pcr-type')) {
                         setTimeout(updateCustomInputs, 10);
                     }
                 });
 
-                setTimeout(updateCustomInputs, 50);
+                setTimeout(updateCustomInputs, 50); 
             });
 
-            pickr.on('change', (color) => {
+            // Основной обработчик изменений (для мыши)
+            pickr.on('change', (color, source, instance) => {
+                // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ:
+                instance.applyColor(true); // Теперь миниатюра меняется сразу, пока ты водишь мышью
+                
                 textInput.value = color.toHEXA().toString().toUpperCase();
                 render();
             }).on('save', () => { pickr.hide(); });
@@ -1384,8 +1284,8 @@ void main() {
                 const exportAspect = rw / rh;
                 const screenAspect = ow / oh;
 
-                exOffX = (exportAspect / 2) - ((screenAspect / 2) - originalPosX) / zoom;
-                exOffY = 0.5 - (0.5 - originalPosY) / zoom;
+                const exOffX = (exportAspect / 2) - ((screenAspect / 2) - originalPosX) / zoom;
+                const exOffY = 0.5 - (0.5 - originalPosY) / zoom;
 
                 gl.uniform2f(locPosOffset, exOffX, exOffY);
             } else {
@@ -1439,8 +1339,8 @@ void main() {
                 rw = Math.round(rect.width); rh = Math.round(rect.height);
                 const zoom = rect.height / oh;
                 gl.uniform1f(locScale, originalScale * zoom);
-                exOffX = ((rw / rh) / 2) - (((ow / oh) / 2) - originalPosX) / zoom;
-                exOffY = 0.5 - (0.5 - originalPosY) / zoom;
+                const exOffX = ((rw / rh) / 2) - (((ow / oh) / 2) - originalPosX) / zoom;
+                const exOffY = 0.5 - (0.5 - originalPosY) / zoom;
                 gl.uniform2f(locPosOffset, exOffX, exOffY);
             } else {
                 gl.uniform1f(locScale, originalScale); gl.uniform2f(locPosOffset, originalPosX, originalPosY);
@@ -1487,8 +1387,8 @@ void main() {
                 rw = Math.round(rect.width); rh = Math.round(rect.height);
                 const zoom = rect.height / oh;
                 gl.uniform1f(locScale, originalScale * zoom);
-                exOffX = ((rw / rh) / 2) - (((ow / oh) / 2) - originalPosX) / zoom;
-                exOffY = 0.5 - (0.5 - originalPosY) / zoom;
+                const exOffX = ((rw / rh) / 2) - (((ow / oh) / 2) - originalPosX) / zoom;
+                const exOffY = 0.5 - (0.5 - originalPosY) / zoom;
                 gl.uniform2f(locPosOffset, exOffX, exOffY);
             } else {
                 gl.uniform1f(locScale, originalScale); gl.uniform2f(locPosOffset, originalPosX, originalPosY);
@@ -1545,61 +1445,6 @@ void main() {
         });
 
         setTimeout(render, 50);
-
-        
-
-        function initMaskCanvas() {
-            maskCanvas.width = canvas.width;
-            maskCanvas.height = canvas.height;
-            mctx.fillStyle = 'black';
-            mctx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-
-            // Создаем текстуру WebGL из этого холста
-            maskTexture = gl.createTexture();
-            updateMaskTexture();
-        }
-
-        function updateMaskTexture() {
-            if (!maskTexture) return; // ЗАЩИТА: ждем, пока текстура создастся
-
-            gl.bindTexture(gl.TEXTURE_2D, maskTexture);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, maskCanvas);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        }
-
-
-       
-
-        // --- КНОПКА ПЕРЕКЛЮЧЕНИЯ РЕЖИМА ---
-        document.getElementById('btn-draw-mode').addEventListener('click', (e) => {
-            isDrawingMode = !isDrawingMode; // Переключаем флаг
-
-            // 1. Меняем иконку (кружок)
-            document.getElementById('draw-status-icon').innerText = isDrawingMode ? '🔵' : '⚪';
-
-            // 2. Подсвечиваем саму кнопку, чтобы было понятно, что режим активен
-            const btn = e.currentTarget;
-            if (isDrawingMode) {
-                btn.style.background = 'rgba(40, 196, 255, 0.2)';
-                btn.style.borderColor = '#28C4FF';
-            } else {
-                btn.style.background = '';
-                btn.style.borderColor = '';
-            }
-
-            // 3. Меняем курсор на самом холсте
-            canvas.style.cursor = isDrawingMode ? 'crosshair' : 'grab';
-        });
-
-        document.getElementById('btn-clear-draw').addEventListener('click', () => {
-            mctx.fillStyle = 'black';
-            mctx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-            updateMaskTexture();
-        });
-
     </script>
 </body>
 
